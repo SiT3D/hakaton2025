@@ -1,5 +1,28 @@
 <script setup>
 import { ref } from "vue"
+import { onMounted, onBeforeUnmount } from "vue"
+
+import { useRouter } from "vue-router"
+
+const router = useRouter()
+
+function goToCreate() {
+  router.push('/create')
+}
+
+function handleClickOutside(e) {
+  const menu = document.querySelector(".menu")
+  if (menu && !menu.contains(e.target) && !e.target.classList.contains("dots")) {
+    openMenu.value = null
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutside)
+})
 
 const plots = ref([
   {
@@ -57,7 +80,7 @@ function remove(plot) { console.log("Delete", plot) }
   <div class="farm">
     <div class="farm-header">
       <h1>Farm Plot</h1>
-      <button class="add" @click="console.log('add')">+</button>
+      <button class="add" @click="goToCreate">+</button>
     </div>
 
     <div v-for="plot in plots" :key="plot.id" class="plot-card">
@@ -90,6 +113,8 @@ function remove(plot) { console.log("Delete", plot) }
     </button>
   </div>
 </template>
+
+
 
 <style scoped>
 .farm {
@@ -148,6 +173,7 @@ function remove(plot) { console.log("Delete", plot) }
   background: none;
   font-size: 20px;
   cursor: pointer;
+  color: black;
 }
 
 /* меню */
