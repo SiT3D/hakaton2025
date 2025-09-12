@@ -1,0 +1,38 @@
+services:
+  javaapp:
+    build: ./images/java
+    restart: always
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./javaapp:/usr/src/app
+    command: java -jar app.jar
+
+  php:
+    build: ./images/php
+    restart: always
+    volumes:
+      - ./www:/var/www
+    environment:
+      PHP_IDE_CONFIG: "serverName=Docker"
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "8085:8085"
+      - "443:443"
+    volumes:
+      - ./hosts:/etc/nginx/conf.d
+      - ./www:/var/www
+      - ./logs:/var/log/nginx
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - php
+      - javaapp
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "127.0.0.1:6380:6379"

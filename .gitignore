@@ -1,0 +1,26 @@
+# PhpStorm
+.idea/
+*.iml
+
+# Composer
+/vendor/
+/composer.lock
+
+# Node
+/node_modules/
+/npm-debug.log
+/yarn.lock
+
+# Logs
+*.log
+
+# Cache
+/cache/
+/tmp/
+
+# Env
+.env
+
+# OS
+.DS_Store
+Thumbs.db
