@@ -71,7 +71,6 @@ function toggleMenu(id) {
   openMenu.value = openMenu.value === id ? null : id
 }
 
-function change(plot) { console.log("Change", plot) }
 function exportOne(plot) { console.log("Export", plot) }
 function remove(plot) { console.log("Delete", plot) }
 </script>
@@ -91,7 +90,6 @@ function remove(plot) { console.log("Delete", plot) }
           <h3>{{ plot.name }}</h3>
           <button @click="toggleMenu(plot.id)" class="dots">...</button>
           <div v-if="openMenu === plot.id" class="menu">
-            <button @click="change(plot)">Change</button>
             <button @click="exportOne(plot)">Export</button>
             <button @click="remove(plot)">Delete</button>
           </div>
