@@ -1,7 +1,7 @@
 <template>
   <div class="register">
     <h1>Create new Account</h1>
-    <p>Already Registered? <a href="#">Login</a></p>
+    <p>Already Registered? <a href="/login">Login</a></p>
 
     <form @submit.prevent="submit">
       <label>Phone</label>
