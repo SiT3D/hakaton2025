@@ -18,5 +18,17 @@ $router->get('/', function () use ($router) {
 });
 
 $router->get('/hello', function () {
+
     return ['msg' => 'Hello from Lumen!'];
+});
+
+$router->get('/java-hello', function () {
+    $ch = curl_init('http://javaapp:8081/api/hello');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return response()->json([
+        'from_java' => $response
+    ]);
 });
