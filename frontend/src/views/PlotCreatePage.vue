@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue"
+import Map from "../components/Map.vue";
 
 const name = ref("")
 const area = ref("")
@@ -24,11 +25,15 @@ function submit() {
 }
 </script>
 
+
 <template>
   <div class="create-plot">
     <h1>Create New Plot</h1>
 
     <form @submit.prevent="submit">
+
+      <Map/>
+
       <label>Name</label>
       <input v-model="name" type="text" required />
 
