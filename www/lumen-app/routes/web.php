@@ -126,3 +126,29 @@ $router->post('/create-plot', function (Request $request) {
 
     return response()->json(['status' => 'ok']);
 });
+
+
+$router->get('/plots', function (Request $request) {
+    $owner_id = $request->input('owner_id');
+
+    $plots = DB::table('plots')
+        ->where('owner_id', $owner_id)
+        ->select(
+            'id',
+            'name',
+            'cadastral_number',
+            'sowing_date',
+            'area',
+            'land_use',
+            'culture',
+            'culture_description',
+            DB::raw('ST_AsGeoJSON(geometry) as geometry')
+        )
+        ->get()
+        ->map(function ($plot) {
+            $plot->geometry = json_decode($plot->geometry, true);
+            return $plot;
+        });
+
+    return response()->json($plots);
+});

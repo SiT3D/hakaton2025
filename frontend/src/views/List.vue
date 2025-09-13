@@ -1,13 +1,13 @@
 <script setup>
-import { ref } from "vue"
-import { onMounted, onBeforeUnmount } from "vue"
 
+import { ref, onMounted, onBeforeUnmount } from "vue"
+import axios from "axios"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
 
 function goToCreate() {
-  router.push('/create')
+  router.push("/create")
 }
 
 function handleClickOutside(e) {
@@ -17,53 +17,34 @@ function handleClickOutside(e) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener("click", handleClickOutside)
+
+  try {
+    const res = await axios.get("http://localhost:8085/plots", {
+      params: { owner_id: localStorage.getItem("user_id") }
+    })
+    plots.value = res.data.map(p => ({
+      id: p.id,
+      name: p.name,
+      area: p.area,
+      land_use: p.land_use,
+      culture: p.culture,
+      livestock: p.livestock,
+      cadastral: p.cadastral_number,
+      sowingDate: p.sowing_date,
+      thumbnails: []
+    }))
+  } catch (err) {
+    console.error("Ошибка загрузки плотов", err)
+  }
 })
+
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside)
 })
 
-const plots = ref([
-  {
-    id: 1,
-    name: "North Field",
-    area: "53 ha",
-    crop: "Vegetables",
-    cadastral: "MD-2025-001",
-    sowingDate: "2025-03-15",
-    thumbnails: [
-      "https://placehold.co/80x60",
-      "https://placehold.co/80x60",
-      "https://placehold.co/80x60"
-    ]
-  },
-  {
-    id: 2,
-    name: "South Plot",
-    area: "23 ha",
-    crop: "Pasture",
-    cadastral: "MD-2025-002",
-    sowingDate: "2025-04-02",
-    thumbnails: [
-      "https://placehold.co/80x60",
-      "https://placehold.co/80x60"
-    ]
-  },
-  {
-    id: 3,
-    name: "East Meadow",
-    area: "12 ha",
-    crop: "Corn",
-    cadastral: "MD-2025-003",
-    sowingDate: "2025-04-10",
-    thumbnails: [
-      "https://placehold.co/80x60",
-      "https://placehold.co/80x60",
-    ]
-  }
-])
-
+const plots = ref([])       // 👈 теперь пустой массив
 const selected = ref([])
 const openMenu = ref(null)
 
@@ -73,6 +54,7 @@ function toggleMenu(id) {
 
 function exportOne(plot) { console.log("Export", plot) }
 function remove(plot) { console.log("Delete", plot) }
+
 </script>
 
 <template>
@@ -115,7 +97,8 @@ function remove(plot) { console.log("Delete", plot) }
         </div>
 
         <p><b>Area:</b> {{ plot.area }}</p>
-        <p><b>Crop:</b> {{ plot.crop }}</p>
+        <p v-if="plot.land_use === 'crop'"><b>Culture:</b> {{ plot.culture }}</p>
+        <p v-else-if="plot.land_use === 'livestock'"><b>Livestock:</b> {{ plot.livestock }}</p>
         <p><b>Cadastral:</b> {{ plot.cadastral }}</p>
         <p><b>Sowing date:</b> {{ plot.sowingDate }}</p>
 
