@@ -1,6 +1,5 @@
 <template>
   <div>
-
     <div ref="map" class="map"></div>
 
     <div class="polygons" v-if="polygons.length">
@@ -17,7 +16,12 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue"
+import { onMounted, ref, watch } from "vue"
+
+const props = defineProps({
+  coords: { type: Array, default: () => [] }
+})
+const emit = defineEmits(["update:coords"])
 
 const map = ref(null)
 const polygons = ref([])
@@ -25,6 +29,10 @@ const polygons = ref([])
 function removePolygon(index) {
   polygons.value[index].overlay.setMap(null)
   polygons.value.splice(index, 1)
+
+  // пересобираем coords и отправляем наверх
+  const merged = polygons.value.map(p => p.coords)
+  emit("update:coords", merged.flat())
 }
 
 onMounted(() => {
@@ -46,10 +54,7 @@ onMounted(() => {
   google.maps.event.addListener(drawingManager, "overlaycomplete", (event) => {
     if (event.type === "polygon") {
       const path = event.overlay.getPath().getArray()
-      const coords = path.map((p) => ({
-        lat: p.lat(),
-        lng: p.lng(),
-      }))
+      const coords = path.map((p) => [p.lng(), p.lat()]) // [lon, lat]
 
       const areaMeters = google.maps.geometry.spherical.computeArea(path)
       const areaHectares = (areaMeters / 10000).toFixed(2)
@@ -59,6 +64,10 @@ onMounted(() => {
         coords,
         area: areaHectares,
       })
+
+      // эмитим в родитель
+      const merged = polygons.value.map(p => p.coords)
+      emit("update:coords", merged.flat())
     }
   })
 })

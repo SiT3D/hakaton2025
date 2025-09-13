@@ -15,7 +15,6 @@
       <label>Площадь (га)</label>
       <input v-model="area" type="number" step="0.01" placeholder="Например 23.5" />
 
-      <!-- Ветвление по использованию -->
       <label>Использование земли</label>
       <select v-model="usageType" required>
         <option value="">-- выберите --</option>
@@ -56,7 +55,8 @@
       </div>
 
       <h3>Карта участка</h3>
-      <Map />
+      <!-- пробрасываем координаты из карты -->
+      <Map v-model:coords="coords" />
 
       <button type="submit">Сохранить</button>
     </form>
@@ -65,46 +65,60 @@
 
 <script setup>
 import { ref } from "vue"
-import Map from "@/components/Map.vue"   // подключаем твой компонент карты
+import axios from "axios"
+import Map from "@/components/Map.vue"
 
 const name = ref("")
 const cadastral = ref("")
 const sowingDate = ref("")
 const area = ref("")
-
-// выбор посев / скот
 const usageType = ref("")
 const crop = ref("")
 const cropDescription = ref("")
 const livestock = ref("")
 const livestockDescription = ref("")
+const coords = ref([]) // сюда прилетят точки из карты
 
 const crops = ["Пшеница", "Кукуруза", "Подсолнечник", "Картофель"]
 const animals = ["Крупный рогатый скот", "Овцы", "Козы", "Свинина", "Птица"]
 
-// фото
+const files = ref([])
 const previews = ref([])
+
 function handleFiles(e) {
-  const files = Array.from(e.target.files)
-  previews.value = files.map((f) => URL.createObjectURL(f))
+  files.value = Array.from(e.target.files)
+  previews.value = files.value.map((f) => URL.createObjectURL(f))
 }
 function removeImage(i) {
+  files.value.splice(i, 1)
   previews.value.splice(i, 1)
 }
 
-function submit() {
-  console.log("Submit:", {
-    name: name.value,
-    cadastral: cadastral.value,
-    sowingDate: sowingDate.value,
-    area: area.value,
-    usageType: usageType.value,
-    crop: crop.value,
-    cropDescription: cropDescription.value,
-    livestock: livestock.value,
-    livestockDescription: livestockDescription.value,
-    images: previews.value,
-  })
+async function submit() {
+  try {
+    const form = new FormData()
+    form.append("name", name.value)
+    form.append("cadastral_number", cadastral.value)
+    form.append("sowing_date", sowingDate.value)
+    form.append("area", area.value)
+    form.append("land_use", usageType.value)
+    form.append("culture", crop.value)
+    form.append("culture_description", cropDescription.value)
+    form.append("livestock", livestock.value)
+    form.append("livestock_description", livestockDescription.value)
+    form.append("coordinates", JSON.stringify(coords.value))
+
+    files.value.forEach((f) => form.append("photos[]", f))
+
+    await axios.post("http://localhost:8085/create-plot", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+
+    alert("Участок сохранён ✅")
+  } catch (err) {
+    console.error(err)
+    alert("Ошибка сохранения")
+  }
 }
 </script>
 

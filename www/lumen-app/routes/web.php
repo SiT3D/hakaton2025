@@ -14,6 +14,7 @@
 */
 
 use Carbon\Carbon;
+use Firebase\JWT\JWT;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Routing\Router;
@@ -77,7 +78,7 @@ $router->post('login', function (Request $request) {
         ], 401);
     }
 
-    $jwt = \Firebase\JWT\JWT::class::encode($payload, env('JWT_SECRET'), 'HS256');
+    $jwt = JWT::class::encode($payload, env('JWT_SECRET'), 'HS256');
 
     return response()->json(['status' => 'ok', 'token' => $jwt]);
 });
@@ -85,6 +86,45 @@ $router->post('login', function (Request $request) {
 
 $router->get('/jwt-test', function () {
     $payload = ['foo' => 'bar', 'iat' => time()];
-    $token = \Firebase\JWT\JWT::encode($payload, 'secret_key', 'HS256');
+    $token   = JWT::encode($payload, 'secret_key', 'HS256');
+
     return $token;
+});
+
+$router->post('/create-plot', function () {
+    $request = app(Request::class);
+
+    $coords = json_decode($request->input('coordinates'), true);
+
+    // строим список точек
+    $points = collect($coords)
+        ->map(fn($p) => $p[0].' '.$p[1])
+        ->join(', ');
+
+    // замыкаем полигон, если первая != последней
+    $first = $coords[0];
+    $last  = $coords[count($coords)-1];
+
+    if ($first[0] != $last[0] || $first[1] != $last[1]) {
+        $points .= ', '.$first[0].' '.$first[1];
+    }
+
+    $wkt = "POLYGON(($points))";
+
+    DB::table('plots')->insert([
+        'name' => $request->input('name'),
+        'cadastral_number' => $request->input('cadastral_number'),
+        'sowing_date' => $request->input('sowing_date'),
+        'area' => $request->input('area'),
+        'land_use' => $request->input('land_use'),
+        'culture' => $request->input('culture'),
+        'culture_description' => $request->input('culture_description'),
+        'livestock' => $request->input('livestock'),
+        'livestock_description' => $request->input('livestock_description'),
+        'geometry' => DB::raw("ST_GeomFromText('$wkt', 4326)"),
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+    ]);
+
+    return response()->json(['status' => 'ok']);
 });
