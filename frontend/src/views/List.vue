@@ -99,10 +99,14 @@ async function remove(plot)
   <br>
   - разметка на картах существующих плотов, та пока всех
   <br>
+  - подумать почему они скрывают данные, психология
+  <br>
   <br>
 
 
   <a href="/user">Progress page</a>
+  <br>
+  <a href="/stats">Stats</a>
   <div class="farm">
     <div class="farm-header">
       <h1>Farm Plot</h1>

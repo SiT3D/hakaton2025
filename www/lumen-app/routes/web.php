@@ -206,6 +206,15 @@ $router->get('/plots', function (Request $request) {
     return response()->json($plots);
 });
 
+
+$router->get('/plots-all', function (Request $request) {
+
+    $plots = DB::table('plots')
+        ->get();
+
+    return response()->json($plots);
+});
+
 $router->delete('/plots/{id}', function ($id) {
     $deleted = DB::table('plots')->where('id', $id)->delete();
 
@@ -236,13 +245,13 @@ $router->get('/plots/near/{id}', function ($id, Request $req) {
 
 
 $router->get('/progress/group/{owner_id}', function ($owner_id, Request $req) {
-    $radius = $req->input('radius', 10000); // 10 км
+    $radius  = $req->input('radius', 10000); // 10 км
     $maxArea = 10000; // лимит для 100% прогресса
 
     // все плоты юзера
     $userPlots = DB::table('plots')->where('owner_id', $owner_id)->get();
 
-    $ids = $userPlots->pluck('id')->all();
+    $ids    = $userPlots->pluck('id')->all();
     $idList = implode(',', $ids);
 
     $neighbors = DB::select("
@@ -264,9 +273,9 @@ $router->get('/progress/group/{owner_id}', function ($owner_id, Request $req) {
     $progress = min(100, ($totalArea / $maxArea) * 100);
 
     return response()->json([
-        'progress' => $progress,
-        'total_area' => $totalArea,
-        'user_area' => $userPlots->sum('area'),
+        'progress'       => $progress,
+        'total_area'     => $totalArea,
+        'user_area'      => $userPlots->sum('area'),
         'neighbors_area' => collect($neighbors)->sum('area'),
     ]);
 });

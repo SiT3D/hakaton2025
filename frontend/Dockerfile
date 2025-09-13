@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm install
 RUN npm install vue-router@4
 RUN npm install axios
+RUN npm install chart.js vue-chartjs
 
 COPY . .
 
