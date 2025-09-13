@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref } from "vue"
 
 const props = defineProps({
   coords: { type: Array, default: () => [] }
@@ -30,12 +30,11 @@ function removePolygon(index) {
   polygons.value[index].overlay.setMap(null)
   polygons.value.splice(index, 1)
 
-  // пересобираем coords и отправляем наверх
   const merged = polygons.value.map(p => p.coords)
   emit("update:coords", merged.flat())
 }
 
-onMounted(() => {
+onMounted(async () => {
   const gmap = new google.maps.Map(map.value, {
     center: { lat: 47.0105, lng: 28.8638 }, // Кишинёв
     zoom: 10,
@@ -51,10 +50,11 @@ onMounted(() => {
   })
   drawingManager.setMap(gmap)
 
+  // рисование вручную
   google.maps.event.addListener(drawingManager, "overlaycomplete", (event) => {
     if (event.type === "polygon") {
       const path = event.overlay.getPath().getArray()
-      const coords = path.map((p) => [p.lng(), p.lat()]) // [lon, lat]
+      const coords = path.map((p) => [p.lng(), p.lat()])
 
       const areaMeters = google.maps.geometry.spherical.computeArea(path)
       const areaHectares = (areaMeters / 10000).toFixed(2)
@@ -65,11 +65,53 @@ onMounted(() => {
         area: areaHectares,
       })
 
-      // эмитим в родитель
       const merged = polygons.value.map(p => p.coords)
       emit("update:coords", merged.flat())
     }
   })
+
+  // загружаем плоты из API и рисуем их
+  try {
+    const res = await fetch("http://localhost:8085/plots-all?with_geo=1", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    })
+    const plots = await res.json()
+
+    plots.forEach(plot => {
+      console.log(plot);
+      if (plot.geometry?.coordinates) {
+        const coords = plot.geometry.coordinates[0].map(([lng, lat]) => ({ lat, lng }))
+
+        const polygon = new google.maps.Polygon({
+          paths: coords,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#FF0000",
+          fillOpacity: 0.35,
+        })
+        polygon.setMap(gmap)
+
+        polygons.value.push({
+          overlay: polygon,
+          coords: plot.geometry.coordinates[0],
+          area: plot.area,
+        })
+
+        // popup с названием участка
+        const info = new google.maps.InfoWindow({
+          content: `<b>${plot.name || "Участок"}</b><br/>${plot.area} га`,
+        })
+        polygon.addListener("click", (e) => {
+          info.setPosition(e.latLng)
+          info.open(gmap)
+        })
+      }
+    })
+  } catch (e) {
+    console.error("Ошибка загрузки плотов", e)
+  }
 })
 </script>
 

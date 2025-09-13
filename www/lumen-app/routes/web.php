@@ -208,12 +208,42 @@ $router->get('/plots', function (Request $request) {
 
 
 $router->get('/plots-all', function (Request $request) {
+    $withGeo = $request->boolean('with_geo', false);
 
-    $plots = DB::table('plots')
-        ->get();
+    $query = DB::table('plots')
+        ->select(
+            'id',
+            'name',
+            'owner_id',
+            'cadastral_number',
+            'sowing_date',
+            'area',
+            'land_use',
+            'culture',
+            'culture_description',
+            'livestock',
+            'livestock_description',
+            'livestock_count',
+            'created_at',
+            'updated_at'
+        );
+
+    if ($withGeo) {
+        $query->addSelect(DB::raw('ST_AsGeoJSON(geometry) as geometry'));
+    }
+
+    $plots = $query->get();
+
+    if ($withGeo) {
+        $plots->transform(function ($p) {
+            $p->geometry = json_decode($p->geometry, true);
+            return $p;
+        });
+    }
 
     return response()->json($plots);
 });
+
 
 $router->delete('/plots/{id}', function ($id) {
     $deleted = DB::table('plots')->where('id', $id)->delete();
