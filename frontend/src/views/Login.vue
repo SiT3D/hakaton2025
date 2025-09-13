@@ -27,10 +27,13 @@
 <script setup>
 import { ref } from "vue"
 import axios from "axios"
+import { useRouter } from "vue-router"   // 👈 добавить
 
 const idnp = ref("")
 const password = ref("")
 const error = ref("")
+
+const router = useRouter()   // 👈 инициализировать
 
 async function submit() {
   error.value = ""
@@ -39,14 +42,14 @@ async function submit() {
       login: idnp.value,
       password: password.value,
     })
-    localStorage.setItem("token", res.data.token)   // <--- сохранить токен
-    router.push("/list")
+    localStorage.setItem("token", res.data.token)
+    router.push("/list")   // 👈 теперь работает корректно
   } catch (err) {
     error.value = err.response?.data?.message || "Ошибка входа"
   }
 }
-
 </script>
+
 
 <style scoped>
 .login {
