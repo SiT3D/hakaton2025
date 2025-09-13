@@ -1,31 +1,25 @@
 <script setup>
-
 import {onBeforeUnmount, onMounted, ref} from "vue"
 import axios from "axios"
 import {useRouter} from "vue-router"
 
 const router = useRouter()
 
-function goToCreate()
-{
+function goToCreate() {
   router.push("/create")
 }
 
-function handleClickOutside(e)
-{
+function handleClickOutside(e) {
   const menu = document.querySelector(".menu")
-  if (menu && !menu.contains(e.target) && !e.target.classList.contains("dots"))
-  {
+  if (menu && !menu.contains(e.target) && !e.target.classList.contains("dots")) {
     openMenu.value = null
   }
 }
 
-onMounted(async () =>
-{
+onMounted(async () => {
   document.addEventListener("click", handleClickOutside)
 
-  try
-  {
+  try {
     const res = await axios.get("http://localhost:8085/plots", {
       params: {owner_id: localStorage.getItem("user_id")}
     })
@@ -39,19 +33,14 @@ onMounted(async () =>
       livestock: p.livestock,
       cadastral: p.cadastral_number,
       sowingDate: p.sowing_date,
-      thumbnails: p.photos && p.photos.length
-          ? p.photos
-          : []
+      thumbnails: p.photos && p.photos.length ? p.photos : []
     }))
-
-  } catch (err)
-  {
+  } catch (err) {
     console.error("Ошибка загрузки плотов", err)
   }
 })
 
-onBeforeUnmount(() =>
-{
+onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside)
 })
 
@@ -59,29 +48,47 @@ const plots = ref([])
 const selected = ref([])
 const openMenu = ref(null)
 
-function toggleMenu(id)
-{
+function toggleMenu(id) {
   openMenu.value = openMenu.value === id ? null : id
 }
 
-function exportOne(plot)
-{
-  console.log("Export", plot)
+function exportOne(plot) {
+  exportCsv([plot])
 }
 
-async function remove(plot)
-{
-  try
-  {
+function exportCsv(data) {
+  if (!data.length) return
+  const headers = Object.keys(data[0]).join(",")
+  const rows = data.map(obj =>
+      Object.values(obj)
+          .map(v => `"${String(v).replace(/"/g, '""')}"`)
+          .join(",")
+  )
+  const csv = [headers, ...rows].join("\n")
+
+  const blob = new Blob([csv], {type: "text/csv;charset=utf-8;"})
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.setAttribute("href", url)
+  link.setAttribute("download", "plots-report.csv")
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+async function remove(plot) {
+  try {
     await axios.delete(`http://localhost:8085/plots/${plot.id}`)
-    plots.value = plots.value.filter(p => p.id !== plot.id)  // 👈 исключаем из списка
-  } catch (e)
-  {
+    plots.value = plots.value.filter(p => p.id !== plot.id)
+  } catch (e) {
     console.error("Ошибка удаления", e)
   }
-
 }
 
+function exportSelected() {
+  const rows = plots.value.filter(p => selected.value.includes(p.id))
+  exportCsv(rows)
+}
 </script>
 
 <template>
@@ -112,7 +119,7 @@ async function remove(plot)
     </div>
 
     <div v-for="plot in plots" :key="plot.id" class="plot-card">
-      <input type="checkbox" :value="plot.id" v-model="selected"/>
+      <input type="checkbox" :value="plot.id" v-model="selected" />
 
       <div class="content">
         <div class="card-header">
@@ -131,17 +138,16 @@ async function remove(plot)
         <p><b>Sowing date:</b> {{ plot.sowingDate }}</p>
 
         <div class="thumbs">
-          <img v-for="(img, i) in plot.thumbnails" :key="i" :src="img"/>
+          <img v-for="(img, i) in plot.thumbnails" :key="i" :src="img" />
         </div>
       </div>
     </div>
 
-    <button v-if="selected.length > 0" class="export-all">
+    <button v-if="selected.length > 0" class="export-all" @click="exportSelected">
       export selected ({{ selected.length }})
     </button>
   </div>
 </template>
-
 
 <style scoped>
 .farm
