@@ -105,6 +105,7 @@ async function submit() {
   try {
     const form = new FormData()
     form.append("name", name.value)
+    form.append("owner_id", localStorage.getItem("user_id"))
     form.append("cadastral_number", cadastral.value)
     form.append("sowing_date", sowingDate.value)
     form.append("area", area.value)

@@ -43,6 +43,7 @@ async function submit()
       password: password.value
     })
     localStorage.setItem("token", res.data.token)
+    localStorage.setItem("user_id", res.data.user.id)
     router.push("/list")
   } catch (err)
   {

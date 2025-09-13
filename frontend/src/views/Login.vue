@@ -41,8 +41,9 @@ async function submit() {
     const res = await axios.post("http://localhost:8085/login", {
       login: idnp.value,
       password: password.value,
-    })
+    }, { headers: { "Content-Type": "application/json" }})
     localStorage.setItem("token", res.data.token)
+    localStorage.setItem("user_id", res.data.user.id)
     router.push("/list")   // 👈 теперь работает корректно
   } catch (err) {
     error.value = err.response?.data?.message || "Ошибка входа"

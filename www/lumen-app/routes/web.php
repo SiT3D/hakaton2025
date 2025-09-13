@@ -81,7 +81,10 @@ $router->post('login', function (Request $request) {
 
     $jwt = JWT::class::encode($payload, env('JWT_SECRET'), 'HS256');
 
-    return response()->json(['status' => 'ok', 'token' => $jwt]);
+    return response()->json([
+        'status' => 'ok', 'token' => $jwt,
+        'user'   => [ 'id' => $user->id, 'login' => $user->login ]
+        ]);
 });
 
 
