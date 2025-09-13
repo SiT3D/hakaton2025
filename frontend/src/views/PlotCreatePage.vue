@@ -56,18 +56,7 @@
       </div>
 
       <h3>Карта участка</h3>
-      <div ref="map" class="map"></div>
-
-      <div class="polygons">
-        <h3>Выделенные полигоны</h3>
-        <ul>
-          <li v-for="(poly, index) in polygons" :key="index">
-            Полигон {{ index + 1 }} —
-            <span>{{ poly.length }} точек</span>
-            <button type="button" @click="removePolygon(index)">✖</button>
-          </li>
-        </ul>
-      </div>
+      <Map />
 
       <button type="submit">Сохранить</button>
     </form>
@@ -75,7 +64,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref } from "vue"
+import Map from "@/components/Map.vue"   // подключаем твой компонент карты
 
 const name = ref("")
 const cadastral = ref("")
@@ -102,42 +92,6 @@ function removeImage(i) {
   previews.value.splice(i, 1)
 }
 
-// карта и полигоны
-const map = ref(null)
-const polygons = ref([])
-
-onMounted(() => {
-  const gmap = new google.maps.Map(map.value, {
-    center: { lat: 47.0105, lng: 28.8638 },
-    zoom: 10,
-  })
-
-  const drawingManager = new google.maps.drawing.DrawingManager({
-    drawingMode: google.maps.drawing.OverlayType.POLYGON,
-    drawingControl: true,
-    drawingControlOptions: {
-      position: google.maps.ControlPosition.TOP_CENTER,
-      drawingModes: ["polygon"],
-    },
-  })
-  drawingManager.setMap(gmap)
-
-  google.maps.event.addListener(drawingManager, "overlaycomplete", (event) => {
-    if (event.type === "polygon") {
-      const path = event.overlay.getPath().getArray()
-      const coords = path.map((p) => ({
-        lat: p.lat(),
-        lng: p.lng(),
-      }))
-      polygons.value.push(coords)
-    }
-  })
-})
-
-function removePolygon(index) {
-  polygons.value.splice(index, 1)
-}
-
 function submit() {
   console.log("Submit:", {
     name: name.value,
@@ -149,13 +103,12 @@ function submit() {
     cropDescription: cropDescription.value,
     livestock: livestock.value,
     livestockDescription: livestockDescription.value,
-    polygons: polygons.value,
     images: previews.value,
   })
 }
 </script>
 
-<style>
+<style scoped>
 .create-plot {
   max-width: 600px;
   margin: 40px auto;
@@ -205,15 +158,6 @@ button {
   align-self: flex-start;
 }
 
-.map {
-  width: 100%;
-  height: 400px;
-  margin-top: 10px;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-}
-
 .thumbs {
   display: flex;
   gap: 8px;
@@ -246,30 +190,4 @@ button {
   font-size: 12px;
   line-height: 18px;
 }
-
-.polygons ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.polygons li {
-  margin: 5px 0;
-  background: #f9f9f9;
-  padding: 6px 10px;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.polygons button {
-  background: red;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 2px 6px;
-  cursor: pointer;
-}
-
 </style>

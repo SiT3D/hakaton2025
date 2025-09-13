@@ -1,11 +1,15 @@
 <template>
   <div>
+
     <div ref="map" class="map"></div>
 
     <div class="polygons" v-if="polygons.length">
       <h3>Выделенные участки</h3>
       <div v-for="(poly, index) in polygons" :key="index" class="polygon-item">
-        <pre>{{ poly.coords }}</pre>
+        <div>
+          <b>Площадь:</b> {{ poly.area }} га
+          <pre>{{ poly.coords }}</pre>
+        </div>
         <button @click="removePolygon(index)">✖</button>
       </div>
     </div>
@@ -19,9 +23,7 @@ const map = ref(null)
 const polygons = ref([])
 
 function removePolygon(index) {
-  // убрать с карты
   polygons.value[index].overlay.setMap(null)
-  // убрать из массива
   polygons.value.splice(index, 1)
 }
 
@@ -49,9 +51,13 @@ onMounted(() => {
         lng: p.lng(),
       }))
 
+      const areaMeters = google.maps.geometry.spherical.computeArea(path)
+      const areaHectares = (areaMeters / 10000).toFixed(2)
+
       polygons.value.push({
-        overlay: event.overlay, // чтобы потом удалить
+        overlay: event.overlay,
         coords,
+        area: areaHectares,
       })
     }
   })
