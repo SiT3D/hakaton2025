@@ -4,6 +4,7 @@ import Login from '../views/Login.vue'
 import List from '../views/List.vue'
 import PlotCreate from '../views/PlotCreatePage.vue'
 import Logout from '../views/Logout.vue'
+import User from '../views/User.vue'
 
 const routes = [
     { path: '/register', component: Register },
@@ -11,6 +12,7 @@ const routes = [
     { path: '/ll', component: Logout },
     { path: '/list', component: List, meta: { requiresAuth: true } },
     { path: '/create', component: PlotCreate, meta: { requiresAuth: true } },
+    { path: '/user', component: User, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
