@@ -9,7 +9,7 @@ import User from '../views/User.vue'
 const routes = [
     { path: '/register', component: Register },
     { path: '/login', component: Login },
-    { path: '/ll', component: Logout },
+    { path: '/logout', component: Logout },
     { path: '/list', component: List, meta: { requiresAuth: true } },
     { path: '/create', component: PlotCreate, meta: { requiresAuth: true } },
     { path: '/user', component: User, meta: { requiresAuth: true } },
