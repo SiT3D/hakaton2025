@@ -17,13 +17,20 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-    if (to.meta.requiresAuth) {
-        const token = localStorage.getItem('token')
-        if (!token) {
-            return next('/login')
-        }
+    const token = localStorage.getItem('token')
+    console.log('Guard:', { path: to.path, token })
+
+    // если роут защищён и токена нет → редиректим на логин
+    if (to.meta.requiresAuth && !token) {
+        return next('/login')
     }
-    next()
+
+    // если уже авторизован и идёт на login/register → редиректим на list
+    if (token && (to.path === '/login' || to.path === '/register')) {
+        return next('/list')
+    }
+
+    return next()
 })
 
 export default router

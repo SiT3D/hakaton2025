@@ -39,11 +39,13 @@ async function submit() {
       login: idnp.value,
       password: password.value,
     })
-    console.log("OK:", res.data)
+    localStorage.setItem("token", res.data.token)   // <--- сохранить токен
+    router.push("/list")
   } catch (err) {
     error.value = err.response?.data?.message || "Ошибка входа"
   }
 }
+
 </script>
 
 <style scoped>
