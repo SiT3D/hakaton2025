@@ -67,6 +67,9 @@
 import { ref } from "vue"
 import axios from "axios"
 import Map from "@/components/Map.vue"
+import { useRouter } from "vue-router"
+
+const router = useRouter()
 
 const name = ref("")
 const cadastral = ref("")
@@ -119,6 +122,7 @@ async function submit() {
     })
 
     alert("Участок сохранён ✅")
+    router.push("/list");
   } catch (err) {
     console.error(err)
     alert("Ошибка сохранения")

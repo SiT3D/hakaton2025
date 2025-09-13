@@ -15,7 +15,7 @@
       />
 
       <label>Password</label>
-      <input v-model="password" type="password" placeholder="******" required />
+      <input v-model="password" type="password" placeholder="******" required/>
 
       <button type="submit">sign up</button>
     </form>
@@ -23,43 +23,59 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
+import {ref} from "vue"
 import axios from "axios"
 import router from "@/router/index.js";
 
 const idnp = ref("")
 const password = ref("")
 
-function submit() {
-  axios.post("http://localhost:8085/register", {
-    login: idnp.value,
-    password: password.value
-  }).then(res => {
-    router.push('/login')
-  }).catch(err => {
+async function submit()
+{
+  try
+  {
+    await axios.post("http://localhost:8085/register", {
+      login: idnp.value,
+      password: password.value
+    })
+    const res = await axios.post("http://localhost:8085/login", {
+      login: idnp.value,
+      password: password.value
+    })
+    localStorage.setItem("token", res.data.token)
+    router.push("/list")
+  } catch (err)
+  {
     console.error(err)
-  })
+  }
 }
 </script>
 
 <style scoped>
-.register {
+.register
+{
   max-width: 400px;
   margin: 60px auto;
   text-align: center;
   font-family: sans-serif;
 }
-form {
+
+form
+{
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
-input {
+
+input
+{
   padding: 10px;
   border: 1px solid #ccc;
   font-size: 16px;
 }
-button {
+
+button
+{
   background: black;
   color: white;
   padding: 12px;

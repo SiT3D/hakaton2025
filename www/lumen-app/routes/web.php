@@ -15,6 +15,7 @@
 
 use Carbon\Carbon;
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Laravel\Lumen\Routing\Router;
@@ -91,37 +92,33 @@ $router->get('/jwt-test', function () {
     return $token;
 });
 
-$router->post('/create-plot', function () {
-    $request = app(Request::class);
-
+$router->post('/create-plot', function (Request $request) {
     $coords = json_decode($request->input('coordinates'), true);
 
-    // строим список точек
     $points = collect($coords)
-        ->map(fn($p) => $p[0].' '.$p[1])
+        ->map(fn($p) => $p[0] . ' ' . $p[1])
         ->join(', ');
 
-    // замыкаем полигон, если первая != последней
     $first = $coords[0];
-    $last  = $coords[count($coords)-1];
-
+    $last  = $coords[count($coords) - 1];
     if ($first[0] != $last[0] || $first[1] != $last[1]) {
-        $points .= ', '.$first[0].' '.$first[1];
+        $points .= ', ' . $first[0] . ' ' . $first[1];
     }
 
     $wkt = "POLYGON(($points))";
 
     DB::table('plots')->insert([
-        'name' => $request->input('name'),
-        'cadastral_number' => $request->input('cadastral_number'),
-        'sowing_date' => $request->input('sowing_date'),
-        'area' => $request->input('area'),
-        'land_use' => $request->input('land_use'),
-        'culture' => $request->input('culture'),
+        'owner_id'            =>  $request->input('owner_id'),
+        'name'                => $request->input('name'),
+        'cadastral_number'    => $request->input('cadastral_number'),
+        'sowing_date'         => $request->input('sowing_date'),
+        'area'                => $request->input('area'),
+        'land_use'            => $request->input('land_use'),
+        'culture'             => $request->input('culture'),
         'culture_description' => $request->input('culture_description'),
-        'geometry' => DB::raw("ST_GeomFromText('$wkt', 4326)"),
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
+        'geometry'            => DB::raw("ST_GeomFromText('$wkt', 4326)"),
+        'created_at'          => Carbon::now(),
+        'updated_at'          => Carbon::now(),
     ]);
 
     return response()->json(['status' => 'ok']);
