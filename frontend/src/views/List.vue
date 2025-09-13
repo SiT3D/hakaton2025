@@ -41,7 +41,7 @@ onMounted(async () =>
       sowingDate: p.sowing_date,
       thumbnails: p.photos && p.photos.length
           ? p.photos
-          : ["https://placehold.co/80x60"]
+          : []
     }))
 
   } catch (err)
