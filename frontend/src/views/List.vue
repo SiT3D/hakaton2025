@@ -26,15 +26,23 @@ onMounted(async () => {
 
     plots.value = res.data.map(p => ({
       id: p.id,
+      owner_id: p.owner_id,
       name: p.name,
+      cadastral: p.cadastral_number,
+      sowingDate: p.sowing_date,
       area: p.area,
       land_use: p.land_use,
       culture: p.culture,
+      culture_description: p.culture_description,
       livestock: p.livestock,
-      cadastral: p.cadastral_number,
-      sowingDate: p.sowing_date,
+      livestock_description: p.livestock_description,
+      livestock_count: p.livestock_count,
+      geometry: p.geometry,
+      created_at: p.created_at,
+      updated_at: p.updated_at,
       thumbnails: p.photos && p.photos.length ? p.photos : []
     }))
+
   } catch (err) {
     console.error("Ошибка загрузки плотов", err)
   }
@@ -95,8 +103,6 @@ function exportSelected() {
   надо добавить
   <br>
   - разметка на картах существующих плотов, та пока всех
-  <br>
-  - отчеты скачивание
   <br>
   - надо еще поля данных добавить
   <br>
