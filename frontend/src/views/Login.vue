@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <h1>Login</h1>
-    <p>Sign in to continue</p>
+    <p>Sign in to continue or <a href="/register">Sign Up</a></p>
 
     <form @submit.prevent="submit">
       <label>Phone</label>
@@ -24,12 +24,21 @@
 
 <script setup>
 import { ref } from "vue"
+import axios from "axios";
 
 const idnp = ref("")
 const password = ref("")
 
-function submit() {
-  console.log("IDNP:", idnp.value, "Password:", password.value)
+async function submit() {
+  try {
+    const res = await axios.post("http://localhost:8085/login", {
+      login: idnp.value,
+      password: password.value,
+    })
+    console.log("OK:", res.data)
+  } catch (err) {
+    console.error("Error:", err.response?.data || err.message)
+  }
 }
 </script>
 

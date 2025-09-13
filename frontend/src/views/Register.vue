@@ -24,12 +24,20 @@
 
 <script setup>
 import { ref } from "vue"
+import axios from "axios"
 
 const idnp = ref("")
 const password = ref("")
 
 function submit() {
-  console.log("Phone:", idnp.value, "Password:", password.value)
+  axios.post("http://localhost:8085/register", {
+    login: idnp.value,
+    password: password.value
+  }).then(res => {
+    console.log(res.data)
+  }).catch(err => {
+    console.error(err)
+  })
 }
 </script>
 

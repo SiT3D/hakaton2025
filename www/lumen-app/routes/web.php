@@ -1,6 +1,6 @@
 <?php
 
-/** @var \Laravel\Lumen\Routing\Router $router */
+/** @var Router $router */
 
 /*
 |--------------------------------------------------------------------------
@@ -12,6 +12,12 @@
 | and give it the Closure to call when that URI is requested.
 |
 */
+
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Laravel\Lumen\Routing\Router;
+use Illuminate\Support\Facades\Hash;
 
 $router->get('/', function () use ($router) {
     return $router->app->version();
@@ -29,6 +35,44 @@ $router->get('/java-hello', function () {
     curl_close($ch);
 
     return response()->json([
-        'from_java' => $response
+        'from_java' => $response,
     ]);
 });
+
+
+$router->post('register', function (Request $request) {
+    DB::table('users')->updateOrInsert([
+        'login' => $request->input('login'),
+    ], [
+        'login'      => $request->input('login'),
+        'password'   => Hash::make($request->input('password')),
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+    ]);
+
+    return response()->json(['status' => 'ok']);
+});
+
+$router->post('login', function (Request $request) {
+    $user = DB::table('users')->where('login', $request->input('login'))->first();
+
+    if (!$user) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Пользователь не найден',
+        ], 404);
+    }
+
+    if (!Hash::check($request->input('password'), $user->password)) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Неверный пароль',
+        ], 401);
+    }
+
+    return response()->json([
+        'status' => 'ok',
+        'user'   => $user,
+    ]);
+});
+

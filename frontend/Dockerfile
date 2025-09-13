@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 RUN npm install vue-router@4
+RUN npm install axios
 
 COPY . .
 
