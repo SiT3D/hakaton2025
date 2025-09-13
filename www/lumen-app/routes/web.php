@@ -119,8 +119,6 @@ $router->post('/create-plot', function () {
         'land_use' => $request->input('land_use'),
         'culture' => $request->input('culture'),
         'culture_description' => $request->input('culture_description'),
-        'livestock' => $request->input('livestock'),
-        'livestock_description' => $request->input('livestock_description'),
         'geometry' => DB::raw("ST_GeomFromText('$wkt', 4326)"),
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now(),

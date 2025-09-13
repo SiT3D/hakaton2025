@@ -85,6 +85,11 @@ function remove(plot) { console.log("Delete", plot) }
   - управление итемами база апи всякие
   <br>
   - хранение фото
+  <br>
+  - привязка к юзеру
+  <br>
+
+  <a href="/user">Progress page</a>
   <div class="farm">
     <div class="farm-header">
       <h1>Farm Plot</h1>

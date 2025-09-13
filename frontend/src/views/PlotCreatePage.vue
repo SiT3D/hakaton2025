@@ -10,10 +10,10 @@
       <input v-model="cadastral" type="text" placeholder="MD-2025-001" required />
 
       <label>Дата посева</label>
-      <input v-model="sowingDate" type="date" />
+      <input v-model="sowingDate" type="date" required />
 
       <label>Площадь (га)</label>
-      <input v-model="area" type="number" step="0.01" placeholder="Например 23.5" />
+      <input v-model="area" type="number" step="0.01" placeholder="Например 23.5" required />
 
       <label>Использование земли</label>
       <select v-model="usageType" required>
@@ -24,7 +24,7 @@
 
       <div v-if="usageType === 'crop'">
         <label>Культура</label>
-        <input list="cropList" v-model="crop" placeholder="Начните вводить..." />
+        <input list="cropList" v-model="crop" placeholder="Начните вводить..." required />
         <datalist id="cropList">
           <option v-for="c in crops" :key="c" :value="c" />
         </datalist>
@@ -35,7 +35,7 @@
 
       <div v-if="usageType === 'livestock'">
         <label>Тип скота</label>
-        <input list="animalList" v-model="livestock" placeholder="Начните вводить..." />
+        <input list="animalList" v-model="livestock" placeholder="Начните вводить..." required />
         <datalist id="animalList">
           <option v-for="a in animals" :key="a" :value="a" />
         </datalist>
@@ -95,6 +95,10 @@ function removeImage(i) {
 }
 
 async function submit() {
+  if (!coords.value.length) {
+    alert("Нужно нарисовать хотя бы один участок на карте")
+    return
+  }
   try {
     const form = new FormData()
     form.append("name", name.value)
