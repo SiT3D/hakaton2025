@@ -7,7 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-frontend/.vite
+.vite
 
 
 node_modules
