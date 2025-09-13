@@ -214,3 +214,59 @@ $router->delete('/plots/{id}', function ($id) {
         'deleted' => $deleted,
     ]);
 });
+
+$router->get('/plots/near/{id}', function ($id, Request $req) {
+    $radius = $req->input('radius', 10000); // в метрах
+
+    $plots = DB::select("
+        WITH points AS (
+          SELECT (dp).geom::geography AS pt
+          FROM plots, ST_DumpPoints(geometry::geometry) dp
+          WHERE id = ?
+        )
+        SELECT DISTINCT p.*
+        FROM plots p
+        JOIN points pt
+          ON ST_DWithin(pt, p.geometry, ?)
+        WHERE p.id != ?
+    ", [$id, $radius, $id]);
+
+    return response()->json($plots);
+});
+
+
+$router->get('/progress/group/{owner_id}', function ($owner_id, Request $req) {
+    $radius = $req->input('radius', 10000); // 10 км
+    $maxArea = 10000; // лимит для 100% прогресса
+
+    // все плоты юзера
+    $userPlots = DB::table('plots')->where('owner_id', $owner_id)->get();
+
+    $ids = $userPlots->pluck('id')->all();
+    $idList = implode(',', $ids);
+
+    $neighbors = DB::select("
+    WITH user_points AS (
+      SELECT (dp).geom::geography AS pt
+      FROM plots, ST_DumpPoints(geometry::geometry) dp
+      WHERE id IN ($idList)
+    )
+    SELECT DISTINCT p.*
+    FROM plots p
+    JOIN user_points pt
+      ON ST_DWithin(pt, p.geometry, ?)
+    WHERE p.id NOT IN ($idList)
+", [$radius]);
+
+    // суммируем площадь (у тебя уже хранится в поле area)
+    $totalArea = collect($neighbors)->sum('area') + $userPlots->sum('area');
+
+    $progress = min(100, ($totalArea / $maxArea) * 100);
+
+    return response()->json([
+        'progress' => $progress,
+        'total_area' => $totalArea,
+        'user_area' => $userPlots->sum('area'),
+        'neighbors_area' => collect($neighbors)->sum('area'),
+    ]);
+});
