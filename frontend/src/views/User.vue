@@ -22,6 +22,7 @@
       <div class="bar">
         <div class="fill" :style="{ height: progress + '%' }"></div>
       </div>
+      <div class="info">{{ progress }}%</div>
       <div class="cards">
         <div
             v-for="(step, i) in steps"
@@ -43,6 +44,7 @@
       <div class="bar">
         <div class="fill" :style="{ height: groupProgress + '%' }"></div>
       </div>
+      <div class="info">{{ groupProgress }}%</div>
       <div class="cards">
         <div
             v-for="(step, i) in steps"
@@ -71,10 +73,12 @@ const groupProgress = ref(0)
 
 onMounted(async () =>
 {
-  try
-  {
+  try {
+    const userId = localStorage.getItem("user_id")
+
+    // персональный прогресс
     const res = await axios.get("http://localhost:8085/plots", {
-      params: {owner_id: localStorage.getItem("user_id")}
+      params: {owner_id: userId}
     })
     const plots = res.data
 
@@ -82,13 +86,15 @@ onMounted(async () =>
         (sum, p) => sum + parseFloat(p.area || 0) + (p.livestock_count || 0),
         0
     )
-
     progress.value = Math.min((personalScore / 100) * 100, 100)
 
-    // пока для теста групповое = 80% от персонального
-    groupProgress.value = Math.min(progress.value * 0.8, 100)
-  } catch (err)
-  {
+    // групповой прогресс
+    const resGroup = await axios.get(`http://localhost:8085/progress/group/${userId}`, {
+      params: {radius: 10000}
+    })
+    groupProgress.value = resGroup.data.progress
+
+  } catch (err) {
     console.error("Ошибка загрузки прогресса", err)
   }
 })
@@ -126,24 +132,20 @@ const steps = [
 </script>
 
 <style scoped>
-.user
-{
+.user {
   max-width: 900px;
   margin: 40px auto;
   font-family: sans-serif;
   text-align: center;
 }
 
-.tabs
-{
+.tabs {
   display: flex;
   justify-content: center;
   gap: 10px;
   margin-bottom: 20px;
 }
-
-.tabs button
-{
+.tabs button {
   padding: 10px 20px;
   border: none;
   background: #ddd;
@@ -151,15 +153,12 @@ const steps = [
   border-radius: 6px;
   font-weight: 600;
 }
-
-.tabs button.active
-{
+.tabs button.active {
   background: #4caf50;
   color: #fff;
 }
 
-.progress-wrapper
-{
+.progress-wrapper {
   display: flex;
   justify-content: center;
   gap: 40px;
@@ -167,17 +166,14 @@ const steps = [
   align-items: flex-start;
 }
 
-.bar
-{
+.bar {
   position: relative;
   width: 20px;
   height: 600px;
   border-radius: 10px;
   background: #e0e0e0;
 }
-
-.fill
-{
+.fill {
   position: absolute;
   left: 0;
   bottom: 0;
@@ -187,15 +183,20 @@ const steps = [
   transition: height 0.5s;
 }
 
-.cards
-{
+.info {
+  font-weight: bold;
+  font-size: 18px;
+  margin-left: -65px;
+  z-index: 19;
+  align-self: center;
+}
+
+.cards {
   position: relative;
   width: 380px;
   height: 600px;
 }
-
-.card
-{
+.card {
   position: absolute;
   left: 0;
   width: 100%;
@@ -209,38 +210,28 @@ const steps = [
   opacity: 0.5;
   transition: all 0.4s;
 }
-
-.card.active
-{
+.card.active {
   opacity: 1;
   transform: translateY(50%) scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .3);
+  box-shadow: 0 6px 16px rgba(0,0,0,.3);
 }
-
-.card .overlay
-{
+.card .overlay {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
 }
-
-.card .content
-{
+.card .content {
   position: relative;
   color: #fff;
   text-align: left;
   padding: 15px;
 }
-
-.card h3
-{
+.card h3 {
   margin: 0 0 5px;
   font-size: 18px;
   font-weight: bold;
 }
-
-.card p
-{
+.card p {
   margin: 0;
   font-size: 14px;
 }
