@@ -110,9 +110,26 @@ $router->post('/create-plot', function (Request $request) {
 
     $wkt = "POLYGON(($points))";
 
-    $plotId = DB::table('plots')->updateOrInsert(
-        ['cadastral_number' => $request->input('cadastral_number')],
-        [
+    $exists = DB::table('plots')->where('cadastral_number', $request->input('cadastral_number'))->first();
+
+    if ($exists) {
+        $plotId = $exists->id;
+        DB::table('plots')->where('id', $plotId)->update([
+            'owner_id'              => $request->input('owner_id'),
+            'name'                  => $request->input('name'),
+            'sowing_date'           => $request->input('sowing_date'),
+            'area'                  => $request->input('area'),
+            'land_use'              => $request->input('land_use'),
+            'culture'               => $request->input('culture'),
+            'culture_description'   => $request->input('culture_description'),
+            'livestock'             => $request->input('livestock'),
+            'livestock_description' => $request->input('livestock_description'),
+            'livestock_count'       => $request->input('livestock_count'),
+            'geometry'              => DB::raw("ST_GeomFromText('$wkt', 4326)"),
+            'updated_at'            => Carbon::now(),
+        ]);
+    } else {
+        $plotId = DB::table('plots')->insertGetId([
             'owner_id'              => $request->input('owner_id'),
             'name'                  => $request->input('name'),
             'cadastral_number'      => $request->input('cadastral_number'),
@@ -128,6 +145,7 @@ $router->post('/create-plot', function (Request $request) {
             'created_at'            => Carbon::now(),
             'updated_at'            => Carbon::now(),
         ]);
+    }
 
     if ($request->hasFile('photos')) {
         foreach ($request->file('photos') as $file) {
@@ -137,7 +155,7 @@ $router->post('/create-plot', function (Request $request) {
                 mkdir($publicPath, 0775, true);
             }
 
-            $filename = time().'_'.$file->getClientOriginalName();
+            $filename = time() . '_' . $file->getClientOriginalName();
             $file->move($publicPath, $filename);
 
 
@@ -168,11 +186,19 @@ $router->get('/plots', function (Request $request) {
             'land_use',
             'culture',
             'culture_description',
+            'livestock',
+            'livestock_description',
+            'livestock_count',
             DB::raw('ST_AsGeoJSON(geometry) as geometry')
         )
         ->get()
         ->map(function ($plot) {
             $plot->geometry = json_decode($plot->geometry, true);
+
+            $plot->photos = DB::table('plot_photos')
+                ->where('plot_id', $plot->id)
+                ->pluck('path')
+                ->map(fn($p) => url($p));
 
             return $plot;
         });

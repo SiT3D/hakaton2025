@@ -29,6 +29,7 @@ onMounted(async () =>
     const res = await axios.get("http://localhost:8085/plots", {
       params: {owner_id: localStorage.getItem("user_id")}
     })
+
     plots.value = res.data.map(p => ({
       id: p.id,
       name: p.name,
@@ -38,8 +39,11 @@ onMounted(async () =>
       livestock: p.livestock,
       cadastral: p.cadastral_number,
       sowingDate: p.sowing_date,
-      thumbnails: []
+      thumbnails: p.photos && p.photos.length
+          ? p.photos
+          : ["https://placehold.co/80x60"]
     }))
+
   } catch (err)
   {
     console.error("Ошибка загрузки плотов", err)
@@ -67,10 +71,12 @@ function exportOne(plot)
 
 async function remove(plot)
 {
-  try {
+  try
+  {
     await axios.delete(`http://localhost:8085/plots/${plot.id}`)
     plots.value = plots.value.filter(p => p.id !== plot.id)  // 👈 исключаем из списка
-  } catch (e) {
+  } catch (e)
+  {
     console.error("Ошибка удаления", e)
   }
 
@@ -97,7 +103,6 @@ async function remove(plot)
   - НОВЫЕ ВЫЗОВЫ
   <br>
   <br>
-
 
 
   <a href="/user">Progress page</a>
