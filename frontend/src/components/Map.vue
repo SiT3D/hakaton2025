@@ -50,7 +50,7 @@ onMounted(async () => {
   })
   drawingManager.setMap(gmap)
 
-  // рисование вручную
+  // ручное рисование
   google.maps.event.addListener(drawingManager, "overlaycomplete", (event) => {
     if (event.type === "polygon") {
       const path = event.overlay.getPath().getArray()
@@ -70,16 +70,12 @@ onMounted(async () => {
     }
   })
 
-  // загружаем плоты из API и рисуем их
+  // загружаем плоты из API и рисуем их (без добавления в список)
   try {
-    const res = await fetch("http://localhost:8085/plots-all?with_geo=1", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    })
+    const res = await fetch("http://localhost:8085/plots-all?with_geo=1")
     const plots = await res.json()
 
     plots.forEach(plot => {
-      console.log(plot);
       if (plot.geometry?.coordinates) {
         const coords = plot.geometry.coordinates[0].map(([lng, lat]) => ({ lat, lng }))
 
@@ -93,13 +89,6 @@ onMounted(async () => {
         })
         polygon.setMap(gmap)
 
-        polygons.value.push({
-          overlay: polygon,
-          coords: plot.geometry.coordinates[0],
-          area: plot.area,
-        })
-
-        // popup с названием участка
         const info = new google.maps.InfoWindow({
           content: `<b>${plot.name || "Участок"}</b><br/>${plot.area} га`,
         })
