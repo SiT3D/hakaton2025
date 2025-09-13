@@ -7,13 +7,23 @@ import PlotCreate from '../views/PlotCreatePage.vue'
 const routes = [
     { path: '/register', component: Register },
     { path: '/login', component: Login },
-    { path: '/list', component: List },
-    { path: '/create', component: PlotCreate },
+    { path: '/list', component: List, meta: { requiresAuth: true } },
+    { path: '/create', component: PlotCreate, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
     history: createWebHistory(),
     routes,
+})
+
+router.beforeEach((to, from, next) => {
+    if (to.meta.requiresAuth) {
+        const token = localStorage.getItem('token')
+        if (!token) {
+            return next('/login')
+        }
+    }
+    next()
 })
 
 export default router

@@ -63,6 +63,13 @@ $router->post('login', function (Request $request) {
         ], 404);
     }
 
+    $payload = [
+        'sub'   => $user->id,
+        'login' => $user->login,
+        'iat'   => time(),
+        'exp'   => time() + 3600,
+    ];
+
     if (!Hash::check($request->input('password'), $user->password)) {
         return response()->json([
             'status'  => 'error',
@@ -70,9 +77,14 @@ $router->post('login', function (Request $request) {
         ], 401);
     }
 
-    return response()->json([
-        'status' => 'ok',
-        'user'   => $user,
-    ]);
+    $jwt = \Firebase\JWT\JWT::class::encode($payload, env('JWT_SECRET'), 'HS256');
+
+    return response()->json(['status' => 'ok', 'token' => $jwt]);
 });
 
+
+$router->get('/jwt-test', function () {
+    $payload = ['foo' => 'bar', 'iat' => time()];
+    $token = \Firebase\JWT\JWT::encode($payload, 'secret_key', 'HS256');
+    return $token;
+});
