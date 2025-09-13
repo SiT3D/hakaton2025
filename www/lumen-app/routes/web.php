@@ -111,7 +111,7 @@ $router->post('/create-plot', function (Request $request) {
     $wkt = "POLYGON(($points))";
 
     DB::table('plots')->insert([
-        'owner_id'            =>  $request->input('owner_id'),
+        'owner_id'            => $request->input('owner_id'),
         'name'                => $request->input('name'),
         'cadastral_number'    => $request->input('cadastral_number'),
         'sowing_date'         => $request->input('sowing_date'),
@@ -119,6 +119,9 @@ $router->post('/create-plot', function (Request $request) {
         'land_use'            => $request->input('land_use'),
         'culture'             => $request->input('culture'),
         'culture_description' => $request->input('culture_description'),
+        'livestock'           => $request->input('livestock'),
+        'livestock_description' => $request->input('livestock_description'),
+        'livestock_count'     => $request->input('livestock_count'),
         'geometry'            => DB::raw("ST_GeomFromText('$wkt', 4326)"),
         'created_at'          => Carbon::now(),
         'updated_at'          => Carbon::now(),
@@ -151,4 +154,13 @@ $router->get('/plots', function (Request $request) {
         });
 
     return response()->json($plots);
+});
+
+$router->delete('/plots/{id}', function ($id) {
+    $deleted = DB::table('plots')->where('id', $id)->delete();
+
+    return response()->json([
+        'status' => $deleted ? 'ok' : 'error',
+        'deleted' => $deleted
+    ]);
 });

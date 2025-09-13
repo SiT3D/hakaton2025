@@ -1,28 +1,33 @@
 <script setup>
 
-import { ref, onMounted, onBeforeUnmount } from "vue"
+import {onBeforeUnmount, onMounted, ref} from "vue"
 import axios from "axios"
-import { useRouter } from "vue-router"
+import {useRouter} from "vue-router"
 
 const router = useRouter()
 
-function goToCreate() {
+function goToCreate()
+{
   router.push("/create")
 }
 
-function handleClickOutside(e) {
+function handleClickOutside(e)
+{
   const menu = document.querySelector(".menu")
-  if (menu && !menu.contains(e.target) && !e.target.classList.contains("dots")) {
+  if (menu && !menu.contains(e.target) && !e.target.classList.contains("dots"))
+  {
     openMenu.value = null
   }
 }
 
-onMounted(async () => {
+onMounted(async () =>
+{
   document.addEventListener("click", handleClickOutside)
 
-  try {
+  try
+  {
     const res = await axios.get("http://localhost:8085/plots", {
-      params: { owner_id: localStorage.getItem("user_id") }
+      params: {owner_id: localStorage.getItem("user_id")}
     })
     plots.value = res.data.map(p => ({
       id: p.id,
@@ -35,25 +40,41 @@ onMounted(async () => {
       sowingDate: p.sowing_date,
       thumbnails: []
     }))
-  } catch (err) {
+  } catch (err)
+  {
     console.error("Ошибка загрузки плотов", err)
   }
 })
 
-onBeforeUnmount(() => {
+onBeforeUnmount(() =>
+{
   document.removeEventListener("click", handleClickOutside)
 })
 
-const plots = ref([])       // 👈 теперь пустой массив
+const plots = ref([])
 const selected = ref([])
 const openMenu = ref(null)
 
-function toggleMenu(id) {
+function toggleMenu(id)
+{
   openMenu.value = openMenu.value === id ? null : id
 }
 
-function exportOne(plot) { console.log("Export", plot) }
-function remove(plot) { console.log("Delete", plot) }
+function exportOne(plot)
+{
+  console.log("Export", plot)
+}
+
+async function remove(plot)
+{
+  try {
+    await axios.delete(`http://localhost:8085/plots/${plot.id}`)
+    plots.value = plots.value.filter(p => p.id !== plot.id)  // 👈 исключаем из списка
+  } catch (e) {
+    console.error("Ошибка удаления", e)
+  }
+
+}
 
 </script>
 
@@ -62,19 +83,24 @@ function remove(plot) { console.log("Delete", plot) }
   <br>
   <br>
   <br>
-  - надо ветвление на животноводство налбл и культуры налбл
-  - надо еще поля добавить
+  - надо еще поля данных добавить
   <br>
   <br>
-  - вывести наглядно геймификацию
+  - вывести наглядно геймификацию (всплывашка типа сообщение или хз)
   - реальный расчет балов + групповые баллы
   <br>
-  - экспорт данных
-  <br>
-  - управление итемами база апи всякие
   <br>
   - хранение фото !!!
   <br>
+  - ссылка на страницу пользователя со шкалой
+  <br>
+  - графики
+  <br>
+  - НОВЫЕ ВЫЗОВЫ
+  <br>
+  <br>
+
+
 
   <a href="/user">Progress page</a>
   <div class="farm">
@@ -84,7 +110,7 @@ function remove(plot) { console.log("Delete", plot) }
     </div>
 
     <div v-for="plot in plots" :key="plot.id" class="plot-card">
-      <input type="checkbox" :value="plot.id" v-model="selected" />
+      <input type="checkbox" :value="plot.id" v-model="selected"/>
 
       <div class="content">
         <div class="card-header">
@@ -103,7 +129,7 @@ function remove(plot) { console.log("Delete", plot) }
         <p><b>Sowing date:</b> {{ plot.sowingDate }}</p>
 
         <div class="thumbs">
-          <img v-for="(img, i) in plot.thumbnails" :key="i" :src="img" />
+          <img v-for="(img, i) in plot.thumbnails" :key="i" :src="img"/>
         </div>
       </div>
     </div>
@@ -115,23 +141,25 @@ function remove(plot) { console.log("Delete", plot) }
 </template>
 
 
-
 <style scoped>
-.farm {
+.farm
+{
   max-width: 700px;
   margin: 40px auto;
   font-family: sans-serif;
 }
 
 /* верхний хедер */
-.farm-header {
+.farm-header
+{
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 /* кнопка добавить */
-.add {
+.add
+{
   width: 40px;
   height: 40px;
   border: none;
@@ -142,7 +170,8 @@ function remove(plot) { console.log("Delete", plot) }
   cursor: pointer;
 }
 
-.plot-card {
+.plot-card
+{
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 12px;
@@ -156,23 +185,27 @@ function remove(plot) { console.log("Delete", plot) }
 
 
 /* контент внутри */
-.content {
+.content
+{
   flex: 1;
 }
 
 /* заголовок карточки */
-.card-header {
+.card-header
+{
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.card-header h3 {
+.card-header h3
+{
   margin: 6px 0;
 }
 
 /* кнопка троеточие */
-.dots {
+.dots
+{
   border: none;
   background: none;
   font-size: 20px;
@@ -181,7 +214,8 @@ function remove(plot) { console.log("Delete", plot) }
 }
 
 /* меню */
-.menu {
+.menu
+{
   position: absolute;
   right: 10px;
   top: 40px;
@@ -192,19 +226,34 @@ function remove(plot) { console.log("Delete", plot) }
   z-index: 10;
   border-radius: 4px;
 }
-.menu button {
+
+.menu button
+{
   border: none;
   background: none;
   padding: 8px 12px;
   cursor: pointer;
   text-align: left;
 }
-.menu button:nth-child(1) { color: green; }
-.menu button:nth-child(2) { color: blue; }
-.menu button:nth-child(3) { color: red; }
+
+.menu button:nth-child(1)
+{
+  color: green;
+}
+
+.menu button:nth-child(2)
+{
+  color: blue;
+}
+
+.menu button:nth-child(3)
+{
+  color: red;
+}
 
 /* экспорт */
-.export-all {
+.export-all
+{
   display: block;
   position: fixed;
   bottom: 20px;
@@ -219,20 +268,24 @@ function remove(plot) { console.log("Delete", plot) }
 }
 
 /* чекбоксы */
-input[type="checkbox"] {
+input[type="checkbox"]
+{
   width: 20px;
   height: 20px;
   margin-top: 5px;
 }
 
 /* миниатюры */
-.thumbs {
+.thumbs
+{
   display: flex;
   gap: 6px;
   margin-top: 8px;
   flex-wrap: wrap;
 }
-.thumbs img {
+
+.thumbs img
+{
   width: 70px;
   height: 50px;
   object-fit: cover;

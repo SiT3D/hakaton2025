@@ -35,13 +35,16 @@
 
       <div v-if="usageType === 'livestock'">
         <label>Тип скота</label>
-        <input list="animalList" v-model="livestock" placeholder="Начните вводить..." required />
+        <input list="animalList" v-model="livestock" required />
         <datalist id="animalList">
           <option v-for="a in animals" :key="a" :value="a" />
         </datalist>
 
         <label>Описание</label>
         <textarea v-model="livestockDescription"></textarea>
+
+        <label>Количество голов</label>
+        <input v-model="livestockCount" type="number" min="1" />
       </div>
 
       <label>Фото</label>
@@ -76,6 +79,7 @@ const cadastral = ref("")
 const sowingDate = ref("")
 const area = ref("")
 const usageType = ref("")
+const livestockCount = ref("")
 const crop = ref("")
 const cropDescription = ref("")
 const livestock = ref("")
@@ -110,10 +114,19 @@ async function submit() {
     form.append("sowing_date", sowingDate.value)
     form.append("area", area.value)
     form.append("land_use", usageType.value)
-    form.append("culture", crop.value)
-    form.append("culture_description", cropDescription.value)
-    form.append("livestock", livestock.value)
-    form.append("livestock_description", livestockDescription.value)
+
+    if (usageType.value === "crop") {
+      form.append("culture", crop.value)
+      form.append("culture_description", cropDescription.value)
+    }
+
+    if (usageType.value === "livestock") {
+      form.append("livestock", livestock.value)
+      form.append("livestock_description", livestockDescription.value)
+      form.append("livestock_count", livestockCount.value)
+    }
+
+
     form.append("coordinates", JSON.stringify(coords.value))
 
     files.value.forEach((f) => form.append("photos[]", f))
