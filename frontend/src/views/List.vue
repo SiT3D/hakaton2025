@@ -97,6 +97,9 @@ async function remove(plot)
   - НОВЫЕ ВЫЗОВЫ
   <br>
   <br>
+  - разметка на картах существующих плотов, та пока всех
+  <br>
+  <br>
 
 
   <a href="/user">Progress page</a>
