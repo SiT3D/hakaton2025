@@ -19,17 +19,21 @@
 
       <button type="submit">login</button>
     </form>
+
+    <p v-if="error" style="color:red; margin-top:10px;">{{ error }}</p>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue"
-import axios from "axios";
+import axios from "axios"
 
 const idnp = ref("")
 const password = ref("")
+const error = ref("")
 
 async function submit() {
+  error.value = ""
   try {
     const res = await axios.post("http://localhost:8085/login", {
       login: idnp.value,
@@ -37,7 +41,7 @@ async function submit() {
     })
     console.log("OK:", res.data)
   } catch (err) {
-    console.error("Error:", err.response?.data || err.message)
+    error.value = err.response?.data?.message || "Ошибка входа"
   }
 }
 </script>
