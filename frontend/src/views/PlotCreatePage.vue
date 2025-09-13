@@ -1,6 +1,7 @@
 <template>
   <div class="create-plot">
     <h1>Создание нового участка</h1>
+    <a href="/list">Назад</a>
 
     <form @submit.prevent="submit" class="create-form">
       <label>Название</label>
