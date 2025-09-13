@@ -15,6 +15,11 @@
       </div>
     </div>
 
+    <div class="chart-box">
+      <h2>Динамика по времени</h2>
+      <Line v-if="lineData" :data="lineData" :options="chartOptions"/>
+    </div>
+
     <!-- таблица анализа -->
     <h2>Детализация по культурам/животным</h2>
     <table class="stats-table">
@@ -48,15 +53,23 @@ import {
   Legend,
   BarElement,
   ArcElement,
+  LineElement,
+  PointElement,
   CategoryScale,
   LinearScale
 } from "chart.js"
-import {Bar, Pie} from "vue-chartjs"
+import {Bar, Pie, Line} from "vue-chartjs"
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, ArcElement, CategoryScale, LinearScale)
+ChartJS.register(
+    Title, Tooltip, Legend,
+    BarElement, ArcElement,
+    LineElement, PointElement,
+    CategoryScale, LinearScale
+)
 
 const barData = ref(null)
 const pieData = ref(null)
+const lineData = ref(null)
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: true
@@ -77,7 +90,6 @@ onMounted(async () => {
       const key = p.land_use || "other"
       types[key] = (types[key] || 0) + parseFloat(p.area / 1000 || 0)
     })
-
     barData.value = {
       labels: Object.keys(types),
       datasets: [
@@ -100,7 +112,6 @@ onMounted(async () => {
         categories[key] = (categories[key] || 0) + (p.livestock_count || 0)
       }
     })
-
     pieData.value = {
       labels: Object.keys(categories),
       datasets: [
@@ -111,11 +122,34 @@ onMounted(async () => {
       ]
     }
 
-    // таблица: площади и прогноз
+    // Линейный график: динамика по дате посева
+    const byDate = {}
+    plots.forEach(p => {
+      if (p.sowing_date) {
+        const date = p.sowing_date.split("T")[0]
+        byDate[date] = (byDate[date] || 0) + parseFloat(p.area || 0)
+      }
+    })
+    const dates = Object.keys(byDate).sort()
+    lineData.value = {
+      labels: dates,
+      datasets: [
+        {
+          label: "Площадь посева (га)",
+          data: dates.map(d => byDate[d]),
+          borderColor: "#42A5F5",
+          backgroundColor: "rgba(66,165,245,0.3)",
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    }
+
+    // Таблица: площади и прогноз
     tableData.value = Object.keys(categories).map(name => ({
       name,
       area: categories[name],
-      forecast: Math.floor(Math.random() * 25) - 10 // от -10 до +15%
+      forecast: Math.floor(Math.random() * 25) - 10 // -10..+15%
     }))
   } catch (err) {
     console.error("Ошибка загрузки статистики", err)
@@ -148,12 +182,6 @@ onMounted(async () => {
   border: 1px solid #ddd;
   text-align: center;
 }
-.up {
-  color: green;
-  font-weight: bold;
-}
-.down {
-  color: red;
-  font-weight: bold;
-}
+.up { color: green; font-weight: bold }
+.down { color: red; font-weight: bold }
 </style>
