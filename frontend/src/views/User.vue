@@ -90,7 +90,7 @@ onMounted(async () =>
 
     // групповой прогресс
     const resGroup = await axios.get(`http://localhost:8085/progress/group/${userId}`, {
-      params: {radius: 10000}
+      params: {radius: 1000}
     })
     groupProgress.value = resGroup.data.progress
 
