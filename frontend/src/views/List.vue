@@ -106,7 +106,7 @@ function remove(plot) { console.log("Delete", plot) }
       </div>
     </div>
 
-    <button v-if="selected.length > 1" class="export-all">
+    <button v-if="selected.length > 0" class="export-all">
       export selected ({{ selected.length }})
     </button>
   </div>
@@ -163,6 +163,10 @@ function remove(plot) { console.log("Delete", plot) }
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.card-header h3 {
+  margin: 6px 0;
 }
 
 /* кнопка троеточие */
