@@ -83,8 +83,8 @@ $router->post('login', function (Request $request) {
 
     return response()->json([
         'status' => 'ok', 'token' => $jwt,
-        'user'   => [ 'id' => $user->id, 'login' => $user->login ]
-        ]);
+        'user'   => ['id' => $user->id, 'login' => $user->login],
+    ]);
 });
 
 
@@ -110,22 +110,45 @@ $router->post('/create-plot', function (Request $request) {
 
     $wkt = "POLYGON(($points))";
 
-    DB::table('plots')->insert([
-        'owner_id'            => $request->input('owner_id'),
-        'name'                => $request->input('name'),
-        'cadastral_number'    => $request->input('cadastral_number'),
-        'sowing_date'         => $request->input('sowing_date'),
-        'area'                => $request->input('area'),
-        'land_use'            => $request->input('land_use'),
-        'culture'             => $request->input('culture'),
-        'culture_description' => $request->input('culture_description'),
-        'livestock'           => $request->input('livestock'),
-        'livestock_description' => $request->input('livestock_description'),
-        'livestock_count'     => $request->input('livestock_count'),
-        'geometry'            => DB::raw("ST_GeomFromText('$wkt', 4326)"),
-        'created_at'          => Carbon::now(),
-        'updated_at'          => Carbon::now(),
-    ]);
+    $plotId = DB::table('plots')->updateOrInsert(
+        ['cadastral_number' => $request->input('cadastral_number')],
+        [
+            'owner_id'              => $request->input('owner_id'),
+            'name'                  => $request->input('name'),
+            'cadastral_number'      => $request->input('cadastral_number'),
+            'sowing_date'           => $request->input('sowing_date'),
+            'area'                  => $request->input('area'),
+            'land_use'              => $request->input('land_use'),
+            'culture'               => $request->input('culture'),
+            'culture_description'   => $request->input('culture_description'),
+            'livestock'             => $request->input('livestock'),
+            'livestock_description' => $request->input('livestock_description'),
+            'livestock_count'       => $request->input('livestock_count'),
+            'geometry'              => DB::raw("ST_GeomFromText('$wkt', 4326)"),
+            'created_at'            => Carbon::now(),
+            'updated_at'            => Carbon::now(),
+        ]);
+
+    if ($request->hasFile('photos')) {
+        foreach ($request->file('photos') as $file) {
+
+            $publicPath = base_path('public/uploads/plots');
+            if (!file_exists($publicPath)) {
+                mkdir($publicPath, 0775, true);
+            }
+
+            $filename = time().'_'.$file->getClientOriginalName();
+            $file->move($publicPath, $filename);
+
+
+            DB::table('plot_photos')->insert([
+                'plot_id'    => $plotId,
+                'path'       => 'uploads/plots/' . $filename,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+    }
 
     return response()->json(['status' => 'ok']);
 });
@@ -150,6 +173,7 @@ $router->get('/plots', function (Request $request) {
         ->get()
         ->map(function ($plot) {
             $plot->geometry = json_decode($plot->geometry, true);
+
             return $plot;
         });
 
@@ -160,7 +184,7 @@ $router->delete('/plots/{id}', function ($id) {
     $deleted = DB::table('plots')->where('id', $id)->delete();
 
     return response()->json([
-        'status' => $deleted ? 'ok' : 'error',
-        'deleted' => $deleted
+        'status'  => $deleted ? 'ok' : 'error',
+        'deleted' => $deleted,
     ]);
 });
