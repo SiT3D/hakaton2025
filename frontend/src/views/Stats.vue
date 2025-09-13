@@ -14,6 +14,27 @@
         <Pie v-if="pieData" :data="pieData" :options="chartOptions"/>
       </div>
     </div>
+
+    <!-- таблица анализа -->
+    <h2>Детализация по культурам/животным</h2>
+    <table class="stats-table">
+      <thead>
+      <tr>
+        <th>Название</th>
+        <th>Площадь</th>
+        <th>Прогноз</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr v-for="(row, i) in tableData" :key="i">
+        <td>{{ row.name }}</td>
+        <td>{{ row.area.toFixed(2) }} га</td>
+        <td :class="row.forecast > 0 ? 'up' : 'down'">
+          {{ row.forecast > 0 ? 'Рост' : 'Падение' }} {{ Math.abs(row.forecast) }}%
+        </td>
+      </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -41,6 +62,8 @@ const chartOptions = {
   maintainAspectRatio: true
 }
 
+const tableData = ref([])
+
 onMounted(async () => {
   try {
     const res = await axios.get("http://localhost:8085/plots-all", {
@@ -59,7 +82,7 @@ onMounted(async () => {
       labels: Object.keys(types),
       datasets: [
         {
-          label: "Площадь",
+          label: "Площадь (га)",
           data: Object.values(types),
           backgroundColor: ["#4caf50", "#2196f3", "#ff9800", "#9c27b0"]
         }
@@ -87,6 +110,13 @@ onMounted(async () => {
         }
       ]
     }
+
+    // таблица: площади и прогноз
+    tableData.value = Object.keys(categories).map(name => ({
+      name,
+      area: categories[name],
+      forecast: Math.floor(Math.random() * 25) - 10 // от -10 до +15%
+    }))
   } catch (err) {
     console.error("Ошибка загрузки статистики", err)
   }
@@ -107,5 +137,23 @@ onMounted(async () => {
 .chart-box {
   flex: 1 1 400px;
   min-height: 400px;
+}
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 30px;
+}
+.stats-table th, .stats-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+.up {
+  color: green;
+  font-weight: bold;
+}
+.down {
+  color: red;
+  font-weight: bold;
 }
 </style>
