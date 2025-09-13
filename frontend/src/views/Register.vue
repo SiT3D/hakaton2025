@@ -25,6 +25,7 @@
 <script setup>
 import { ref } from "vue"
 import axios from "axios"
+import router from "@/router/index.js";
 
 const idnp = ref("")
 const password = ref("")
@@ -34,7 +35,7 @@ function submit() {
     login: idnp.value,
     password: password.value
   }).then(res => {
-    console.log(res.data)
+    router.push('/login')
   }).catch(err => {
     console.error(err)
   })
