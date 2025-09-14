@@ -436,7 +436,17 @@ $router->post('/ai/slice-chat', function (Request $request) {
         ->where('user_id', $ownerId)
         ->get(['slice_type','summary']);
 
-    $context = $userSummaries->map(fn($s) => [
+    // глобальные саммари (все остальные)
+    $globalSummaries = DB::table('plot_summaries')
+        ->where('user_id', '!=', $ownerId)
+        ->get(['slice_type','summary']);
+
+    $userContext = $userSummaries->map(fn($s) => [
+        'slice'   => $s->slice_type,
+        'summary' => $s->summary
+    ])->values()->toJson(JSON_UNESCAPED_UNICODE);
+
+    $globalContext = $globalSummaries->map(fn($s) => [
         'slice'   => $s->slice_type,
         'summary' => $s->summary
     ])->values()->toJson(JSON_UNESCAPED_UNICODE);
@@ -446,7 +456,12 @@ $router->post('/ai/slice-chat', function (Request $request) {
     $messages = [
         [
             'role'    => 'system',
-            'content' => "Ты агро-ассистент. Отвечай только на основе данных (JSON):\n".$context
+            'content' => "Ты агро-ассистент.
+                          Используй в первую очередь данные пользователя,
+                          а потом общие данные региона.
+                          Отвечай кратко, только по тем саммари что есть в JSON.\n\n".
+                "=== ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ===\n".$userContext."\n\n".
+                "=== ОБЩИЕ ДАННЫЕ ===\n".$globalContext
         ]
     ];
 

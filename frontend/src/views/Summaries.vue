@@ -3,8 +3,8 @@ import {ref, onMounted, nextTick} from "vue"
 import axios from "axios"
 
 const summaries = ref([])
-const slice = ref("")
 const slices = ref(["procurement_dates","weather","pests","logistics"])
+const slice = ref(slices.value[0])
 
 async function loadSummaries() {
   const res = await axios.get("http://localhost:8085/summaries", {
