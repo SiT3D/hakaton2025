@@ -365,6 +365,7 @@ $router->post('/ai/chat', function (Request $request) {
 
 $router->get('/summary/init', function (Request $request) {
     $ownerId = $request->input('owner_id');
+    $slice   = 'procurement_dates';
 
     // плоты юзера
     $plots = DB::table('plots')
@@ -390,13 +391,14 @@ $router->get('/summary/init', function (Request $request) {
     $summary = $response['choices'][0]['message']['content'] ?? '';
 
     // пока просто сохраняем в таблицу summaries
-    DB::table('plot_summaries')->insert([
-        'user_id'    => $ownerId,
-        'slice_type' => 'procurement_dates',
-        'summary'    => $summary,
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-    ]);
+    DB::table('plot_summaries')->updateOrInsert(
+        ['user_id' => $ownerId, 'slice_type' => $slice],
+        [
+            'summary'    => $summary,
+            'updated_at' => Carbon::now(),
+            'created_at' => Carbon::now(),
+        ]
+    );
 
     return new JsonResponse([
         'status'   => 'ok',
@@ -406,11 +408,10 @@ $router->get('/summary/init', function (Request $request) {
 });
 
 $router->get('/summaries', function (Request $request) {
-    $ownerId = $request->input('owner_id');
     $slice   = $request->input('slice_type');
 
     $query = DB::table('plot_summaries')
-        ->where('user_id', $ownerId);
+        ;
 
     if ($slice) {
         $query->where('slice_type', $slice);

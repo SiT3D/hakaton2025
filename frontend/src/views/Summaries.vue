@@ -20,6 +20,10 @@ onMounted(loadSummaries)
 </script>
 
 <template>
+
+
+  <a href="/list">back</a>
+
   <div class="summaries">
     <h1>Summaries</h1>
     <select v-model="slice" @change="loadSummaries">
