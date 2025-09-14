@@ -427,34 +427,36 @@ $router->post('/ai/slice-chat', function (Request $request) {
     $ownerId = $request->input('owner_id');
     $question = $request->input('message');
 
-    // саммари юзера
     $userSummaries = DB::table('plot_summaries')
         ->where('user_id', $ownerId)
         ->get(['slice_type','summary']);
 
-    // все остальные саммари (глобальный контекст)
     $globalSummaries = DB::table('plot_summaries')
         ->where('user_id', '!=', $ownerId)
         ->get(['slice_type','summary']);
 
-    $userContext = $userSummaries->map(fn($s) =>
-        strtoupper($s->slice_type).":\n".$s->summary
-    )->implode("\n\n");
+    // форматируем как JSON для модели
+    $userData = $userSummaries->map(fn($s) => [
+        'slice' => $s->slice_type,
+        'summary' => $s->summary
+    ])->values()->toJson(JSON_UNESCAPED_UNICODE);
 
-    $globalContext = $globalSummaries->map(fn($s) =>
-        strtoupper($s->slice_type).":\n".$s->summary
-    )->implode("\n\n");
+    $globalData = $globalSummaries->map(fn($s) => [
+        'slice' => $s->slice_type,
+        'summary' => $s->summary
+    ])->values()->toJson(JSON_UNESCAPED_UNICODE);
 
     $client = OpenAI::client(env('OPENAI_API_KEY'));
 
     $messages = [
-        ['role' => 'system', 'content' =>
-            "Ты агро-ассистент.
-             Используй в первую очередь данные пользователя,
-             а затем — общие данные региона для поиска запроса пользователя
-             основная идея, помочь найти подходящие саммери, например чтобы найти партнеров на какой то период или по каким то критериям, отвечать на разные вопросы по аграрию, находить какие то новости или лучшие практики. Все данные нужно брать из пула саммери, но и уточнять инфо, ответ короткий локоничный без лишних слов. Искать нужно только в саммери которые есть в системе!!!\n\n".
-            "=== ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ===\n".$userContext."\n\n".
-            "=== ОБЩИЕ ДАННЫЕ ===\n".$globalContext
+        [
+            'role' => 'system',
+            'content' =>
+                "Ты агро-ассистент. Отвечай только на основе данных ниже.
+                 Если ответа в данных нет — скажи «нет данных».
+                 Будь краток.\n\n".
+                "=== ДАННЫЕ ПОЛЬЗОВАТЕЛЯ (JSON) ===\n".$userData."\n\n".
+                "=== ОБЩИЕ ДАННЫЕ (JSON) ===\n".$globalData
         ],
         ['role' => 'user', 'content' => $question],
     ];
@@ -465,7 +467,7 @@ $router->post('/ai/slice-chat', function (Request $request) {
     ]);
 
     return new JsonResponse([
-        'reply' => $response['choices'][0]['message']['content'] ?? ''
+        'reply' => $response['choices'][0]['message']['content'] ?? 'нет ответа'
     ], 200, [], JSON_UNESCAPED_UNICODE);
 });
 
