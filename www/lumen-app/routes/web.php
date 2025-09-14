@@ -423,4 +423,33 @@ $router->get('/summaries', function (Request $request) {
 });
 
 
+$router->post('/ai/slice-chat', function (Request $request) {
+    $question = $request->input('message');
+
+    // все саммари пользователя
+    $summaries = DB::table('plot_summaries')
+        ->get(['slice_type','summary']);
+
+    // склеиваем в контекст
+    $context = $summaries->map(fn($s) =>
+        strtoupper($s->slice_type).":\n".$s->summary
+    )->implode("\n\n");
+
+    $client = OpenAI::client(env('OPENAI_API_KEY'));
+    $messages = [
+        ['role' => 'system', 'content' => "Ты агро-ассистент. Отвечай кратко, используя данные из саммари ниже:\n".$context],
+        ['role' => 'user', 'content' => $question],
+    ];
+
+    $response = $client->chat()->create([
+        'model'    => 'gpt-5-nano',
+        'messages' => $messages,
+    ]);
+
+    return new JsonResponse([
+        'reply' => $response['choices'][0]['message']['content'] ?? ''
+    ], 200, [], JSON_UNESCAPED_UNICODE);
+});
+
+
 
