@@ -437,15 +437,6 @@ $router->post('/ai/slice-chat', function (Request $request) {
         ->where('user_id', '!=', $ownerId)
         ->get(['slice_type','summary']);
 
-    /* MDS */
-    echo 'VAR DUMP 6:21 14.09.2025 web.php 441 <br>';
-    echo '<pre>';
-    var_dump($globalSummaries);
-    die();
-    echo '</pre>';
-    echo '<br>';
-    /* MDS */
-
     $userContext = $userSummaries->map(fn($s) =>
         strtoupper($s->slice_type).":\n".$s->summary
     )->implode("\n\n");
