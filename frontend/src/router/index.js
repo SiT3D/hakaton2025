@@ -6,6 +6,7 @@ import PlotCreate from '../views/PlotCreatePage.vue'
 import Logout from '../views/Logout.vue'
 import User from '../views/User.vue'
 import Stats from '../views/Stats.vue'
+import AiChat from '../views/AiChat.vue'
 
 const routes = [
     { path: '/register', component: Register },
@@ -15,6 +16,7 @@ const routes = [
     { path: '/create', component: PlotCreate, meta: { requiresAuth: true } },
     { path: '/user', component: User, meta: { requiresAuth: true } },
     { path: '/stats', component: Stats, meta: { requiresAuth: true } },
+    { path: '/ai', component: AiChat, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({

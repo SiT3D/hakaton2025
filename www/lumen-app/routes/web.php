@@ -15,11 +15,10 @@
 
 use Carbon\Carbon;
 use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Laravel\Lumen\Routing\Router;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Lumen\Routing\Router;
 
 $router->get('/', function () use ($router) {
     return $router->app->version();
@@ -237,6 +236,7 @@ $router->get('/plots-all', function (Request $request) {
     if ($withGeo) {
         $plots->transform(function ($p) {
             $p->geometry = json_decode($p->geometry, true);
+
             return $p;
         });
     }
@@ -309,3 +309,21 @@ $router->get('/progress/group/{owner_id}', function ($owner_id, Request $req) {
         'neighbors_area' => collect($neighbors)->sum('area'),
     ]);
 });
+
+
+$router->post('/ai/chat', function (\Illuminate\Http\Request $request) {
+    $client = OpenAI::client(env('OPENAI_API_KEY'));
+
+    $response = $client->chat()->create([
+        'model' => 'gpt-5-nano',
+        'messages' => [
+            ['role' => 'system', 'content' => 'Ты — помощник-фермер. Отвечай коротко и полезно.'],
+            ['role' => 'user', 'content' => $request->input('message')],
+        ],
+    ]);
+
+    return json_encode([
+        'reply' => $response['choices'][0]['message']['content'] ?? '',
+    ]);
+});
+
