@@ -363,7 +363,47 @@ $router->post('/ai/chat', function (Request $request) {
     ], 200, [], JSON_UNESCAPED_UNICODE);
 });
 
+$router->get('/summary/init', function (Request $request) {
+    $ownerId = $request->input('owner_id');
 
-// todo роут саммаризации плотов по разным срезам по ид пользователя
-// todo анализ срезов на странице, человек + робот
-// todo расширение плотов полями...
+    // плоты юзера
+    $plots = DB::table('plots')
+        ->where('owner_id', $ownerId)
+        ->get(['id', 'name', 'sowing_date', 'area', 'culture']);
+
+    // готовим prompt
+    $plotsText = $plots->map(fn($p) =>
+    "{$p->name}: культура {$p->culture}, дата посева {$p->sowing_date}, площадь {$p->area} га"
+    )->implode("\n");
+
+    $client = OpenAI::client(env('OPENAI_API_KEY'));
+    $messages = [
+        ['role' => 'system', 'content' => 'Ты агро-аналитик. Дай даты оптимальных закупок.'],
+        ['role' => 'user', 'content' => $plotsText],
+    ];
+
+    // запуск асинхронно (в js)
+    $response = $client->chat()->create([
+        'model'    => 'gpt-5-nano',
+        'messages' => $messages,
+    ]);
+
+    $summary = $response['choices'][0]['message']['content'] ?? '';
+
+    // пока просто сохраняем в таблицу summaries
+    DB::table('plot_summaries')->insert([
+        'user_id'    => $ownerId,
+        'slice_type' => 'procurement_dates',
+        'summary'    => $summary,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+    ]);
+
+    return new JsonResponse([
+        'status'   => 'ok',
+        'message'  => 'summary created',
+        'owner_id' => $ownerId,
+    ]);
+});
+
+

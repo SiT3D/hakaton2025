@@ -52,6 +52,17 @@ onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside)
 })
 
+async function initSummary() {
+  try {
+    await axios.get("http://localhost:8085/summary/init", {
+      params: {owner_id: localStorage.getItem("user_id")}
+    })
+    alert("Запущена подготовка саммари")
+  } catch (e) {
+    console.error("Ошибка инициализации", e)
+  }
+}
+
 const plots = ref([])
 const selected = ref([])
 const openMenu = ref(null)
@@ -120,6 +131,10 @@ function exportSelected() {
   <a href="/stats">Stats</a>
   <br>
   <a href="/ai">AI</a>
+
+  <br><br><br>
+  <button @click="initSummary">Init Summary</button>
+
   <div class="farm">
     <div class="farm-header">
       <h1>Farm Plot</h1>
