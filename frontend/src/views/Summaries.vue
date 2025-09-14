@@ -35,8 +35,8 @@ async function sendMessage() {
 
   try {
     const res = await axios.post("http://localhost:8085/ai/slice-chat", {
-      message: userMessage,
       owner_id: localStorage.getItem("user_id"),
+      messages: messages.value,
     })
     messages.value.push({ role: "assistant", content: res.data.reply })
   } catch (e) {

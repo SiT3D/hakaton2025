@@ -425,24 +425,19 @@ $router->get('/summaries', function (Request $request) {
 
 $router->post('/ai/slice-chat', function (Request $request) {
     $ownerId = $request->input('owner_id');
-    $question = $request->input('message');
+    $chatHistory = $request->input('messages', []);
 
+    if (!is_array($chatHistory)) {
+        $chatHistory = [];
+    }
+
+    // саммари юзера
     $userSummaries = DB::table('plot_summaries')
         ->where('user_id', $ownerId)
         ->get(['slice_type','summary']);
 
-    $globalSummaries = DB::table('plot_summaries')
-        ->where('user_id', '!=', $ownerId)
-        ->get(['slice_type','summary']);
-
-    // форматируем как JSON для модели
-    $userData = $userSummaries->map(fn($s) => [
-        'slice' => $s->slice_type,
-        'summary' => $s->summary
-    ])->values()->toJson(JSON_UNESCAPED_UNICODE);
-
-    $globalData = $globalSummaries->map(fn($s) => [
-        'slice' => $s->slice_type,
+    $context = $userSummaries->map(fn($s) => [
+        'slice'   => $s->slice_type,
         'summary' => $s->summary
     ])->values()->toJson(JSON_UNESCAPED_UNICODE);
 
@@ -450,16 +445,19 @@ $router->post('/ai/slice-chat', function (Request $request) {
 
     $messages = [
         [
-            'role' => 'system',
-            'content' =>
-                "Ты агро-ассистент. Отвечай только на основе данных ниже.
-                 Если ответа в данных нет — скажи «нет данных».
-                 Будь краток.\n\n".
-                "=== ДАННЫЕ ПОЛЬЗОВАТЕЛЯ (JSON) ===\n".$userData."\n\n".
-                "=== ОБЩИЕ ДАННЫЕ (JSON) ===\n".$globalData
-        ],
-        ['role' => 'user', 'content' => $question],
+            'role'    => 'system',
+            'content' => "Ты агро-ассистент. Отвечай только на основе данных (JSON):\n".$context
+        ]
     ];
+
+    foreach ($chatHistory as $msg) {
+        if (isset($msg['role'], $msg['content'])) {
+            $messages[] = [
+                'role'    => $msg['role'],
+                'content' => $msg['content']
+            ];
+        }
+    }
 
     $response = $client->chat()->create([
         'model'    => 'gpt-5-nano',
