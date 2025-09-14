@@ -41,6 +41,7 @@ function scrollToBottom() {
 <template>
   <div class="chat">
     <h1>AI Ассистент</h1>
+    <a href="/list">Назад</a>
     <div ref="chatWindow" class="chat-window">
       <div
           v-for="(msg, i) in messages"

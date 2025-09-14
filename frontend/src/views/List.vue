@@ -118,6 +118,8 @@ function exportSelected() {
   <a href="/user">Progress page</a>
   <br>
   <a href="/stats">Stats</a>
+  <br>
+  <a href="/ai">AI</a>
   <div class="farm">
     <div class="farm-header">
       <h1>Farm Plot</h1>

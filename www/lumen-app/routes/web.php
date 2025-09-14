@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Lumen\Routing\Router;
+use Illuminate\Http\JsonResponse;
 
 $router->get('/', function () use ($router) {
     return $router->app->version();
@@ -35,7 +36,7 @@ $router->get('/java-hello', function () {
     $response = curl_exec($ch);
     curl_close($ch);
 
-    return response()->json([
+    return new JsonResponse([
         'from_java' => $response,
     ]);
 });
@@ -51,14 +52,14 @@ $router->post('register', function (Request $request) {
         'updated_at' => Carbon::now(),
     ]);
 
-    return response()->json(['status' => 'ok']);
+    return new JsonResponse(['status' => 'ok']);
 });
 
 $router->post('login', function (Request $request) {
     $user = DB::table('users')->where('login', $request->input('login'))->first();
 
     if (!$user) {
-        return response()->json([
+        return new JsonResponse([
             'status'  => 'error',
             'message' => 'Пользователь не найден',
         ], 404);
@@ -72,7 +73,7 @@ $router->post('login', function (Request $request) {
     ];
 
     if (!Hash::check($request->input('password'), $user->password)) {
-        return response()->json([
+        return new JsonResponse([
             'status'  => 'error',
             'message' => 'Неверный пароль',
         ], 401);
@@ -80,7 +81,7 @@ $router->post('login', function (Request $request) {
 
     $jwt = JWT::class::encode($payload, env('JWT_SECRET'), 'HS256');
 
-    return response()->json([
+    return new JsonResponse([
         'status' => 'ok', 'token' => $jwt,
         'user'   => ['id' => $user->id, 'login' => $user->login],
     ]);
@@ -167,7 +168,7 @@ $router->post('/create-plot', function (Request $request) {
         }
     }
 
-    return response()->json(['status' => 'ok']);
+    return new JsonResponse(['status' => 'ok']);
 });
 
 
@@ -197,12 +198,12 @@ $router->get('/plots', function (Request $request) {
             $plot->photos = DB::table('plot_photos')
                 ->where('plot_id', $plot->id)
                 ->pluck('path')
-                ->map(fn($p) => url($p));
+                ->map(fn($p) => $p);
 
             return $plot;
         });
 
-    return response()->json($plots);
+    return new JsonResponse($plots);
 });
 
 
@@ -241,14 +242,14 @@ $router->get('/plots-all', function (Request $request) {
         });
     }
 
-    return response()->json($plots);
+    return new JsonResponse($plots);
 });
 
 
 $router->delete('/plots/{id}', function ($id) {
     $deleted = DB::table('plots')->where('id', $id)->delete();
 
-    return response()->json([
+    return new JsonResponse([
         'status'  => $deleted ? 'ok' : 'error',
         'deleted' => $deleted,
     ]);
@@ -270,7 +271,7 @@ $router->get('/plots/near/{id}', function ($id, Request $req) {
         WHERE p.id != ?
     ", [$id, $radius, $id]);
 
-    return response()->json($plots);
+    return new JsonResponse($plots);
 });
 
 
@@ -302,7 +303,7 @@ $router->get('/progress/group/{owner_id}', function ($owner_id, Request $req) {
 
     $progress = min(100, ($totalArea / $maxArea) * 100);
 
-    return response()->json([
+    return new JsonResponse([
         'progress'       => $progress,
         'total_area'     => $totalArea,
         'user_area'      => $userPlots->sum('area'),
@@ -311,19 +312,35 @@ $router->get('/progress/group/{owner_id}', function ($owner_id, Request $req) {
 });
 
 
-$router->post('/ai/chat', function (\Illuminate\Http\Request $request) {
+$router->post('/ai/chat', function (Request $request) {
     $client = OpenAI::client(env('OPENAI_API_KEY'));
 
+    $userMessage = $request->input('message');
+
+    // Берём все поля юзера
+    $plots = DB::table('plots')
+        ->where('owner_id', $request->input('owner_id'))
+        ->get(['id', 'name', 'area', 'land_use', 'culture', 'livestock']);
+
+    $plotsSummary = $plots->map(fn($p) => "{$p->name}: {$p->area} га, {$p->land_use}" .
+        ($p->culture ? " (культура: {$p->culture})" : "") .
+        ($p->livestock ? " (животные: {$p->livestock})" : "")
+    )->implode("\n");
+
+    $messages = [
+        ['role' => 'system', 'content' => 'Ты — помощник-фермер. Отвечай коротко и полезно.'],
+        ['role' => 'system', 'content' => "Данные по полям пользователя:\n" . $plotsSummary],
+        ['role' => 'user', 'content' => $userMessage],
+    ];
+
     $response = $client->chat()->create([
-        'model' => 'gpt-5-nano',
-        'messages' => [
-            ['role' => 'system', 'content' => 'Ты — помощник-фермер. Отвечай коротко и полезно.'],
-            ['role' => 'user', 'content' => $request->input('message')],
-        ],
+        'model'    => 'gpt-5-nano',
+        'messages' => $messages,
     ]);
 
-    return json_encode([
+    return new JsonResponse([
         'reply' => $response['choices'][0]['message']['content'] ?? '',
-    ]);
+    ], 200, [], JSON_UNESCAPED_UNICODE);
 });
+
 
