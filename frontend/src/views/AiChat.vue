@@ -1,7 +1,47 @@
+<script setup>
+import { ref, nextTick } from "vue"
+import axios from "axios"
+
+const messages = ref([])
+const input = ref("")
+const chatWindow = ref(null)
+
+async function sendMessage() {
+  if (!input.value.trim()) return
+
+  messages.value.push({ role: "user", content: input.value })
+  const userMessage = input.value
+  input.value = ""
+
+  await nextTick()
+  scrollToBottom()
+
+  try {
+    const res = await axios.post("http://localhost:8085/ai/chat", {
+      message: userMessage,
+    })
+
+    messages.value.push({ role: "assistant", content: res.data.reply })
+  } catch (e) {
+    console.error("Ошибка:", e)
+    messages.value.push({ role: "assistant", content: "⚠ Ошибка сервера" })
+  }
+
+  await nextTick()
+  scrollToBottom()
+}
+
+function scrollToBottom() {
+  if (chatWindow.value) {
+    chatWindow.value.scrollTop = chatWindow.value.scrollHeight
+  }
+}
+</script>
+
 <template>
   <div class="chat">
     <h1>AI Ассистент</h1>
-    <div class="chat-window">
+    <div ref="chatWindow" class="chat-window">
       <div
           v-for="(msg, i) in messages"
           :key="i"
@@ -24,34 +64,6 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from "vue"
-import axios from "axios"
-
-const messages = ref([])
-const input = ref("")
-
-async function sendMessage() {
-  if (!input.value.trim()) return
-
-  // добавляем сообщение пользователя
-  messages.value.push({ role: "user", content: input.value })
-
-  const userMessage = input.value
-  input.value = ""
-
-  try {
-    const res = await axios.post("http://localhost:8085/ai/chat", {
-      message: userMessage,
-    })
-
-    messages.value.push({ role: "assistant", content: res.data.reply })
-  } catch (e) {
-    console.error("Ошибка:", e)
-    messages.value.push({ role: "assistant", content: "⚠ Ошибка сервера" })
-  }
-}
-</script>
 
 <style scoped>
 .chat {
