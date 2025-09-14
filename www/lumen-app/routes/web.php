@@ -317,19 +317,40 @@ $router->post('/ai/chat', function (Request $request) {
 
     $userMessage = $request->input('message');
 
-    // Берём все поля юзера
-    $plots = DB::table('plots')
+    // Плоты юзера
+    $userPlots = DB::table('plots')
         ->where('owner_id', $request->input('owner_id'))
         ->get(['id', 'name', 'area', 'land_use', 'culture', 'livestock']);
 
-    $plotsSummary = $plots->map(fn($p) => "{$p->name}: {$p->area} га, {$p->land_use}" .
+    $userSummary = $userPlots->map(fn($p) =>
+        "{$p->name}: {$p->area} га, {$p->land_use}" .
         ($p->culture ? " (культура: {$p->culture})" : "") .
         ($p->livestock ? " (животные: {$p->livestock})" : "")
     )->implode("\n");
 
+    // Агрегация всех полей (общее по культуре/животным)
+    $allPlots = DB::table('plots')
+        ->select('land_use', 'culture', 'livestock',
+            DB::raw('SUM(area) as total_area'),
+            DB::raw('SUM(COALESCE(livestock_count,0)) as total_livestock')
+        )
+        ->groupBy('land_use', 'culture', 'livestock')
+        ->get();
+
+    $globalSummary = $allPlots->map(function ($p) {
+        if ($p->land_use === 'crop') {
+            return "{$p->culture}: {$p->total_area} га";
+        }
+        if ($p->land_use === 'livestock') {
+            return "{$p->livestock}: {$p->total_livestock} голов";
+        }
+        return "{$p->land_use}: {$p->total_area} га";
+    })->implode("\n");
+
     $messages = [
         ['role' => 'system', 'content' => 'Ты — помощник-фермер. Отвечай коротко и полезно.'],
-        ['role' => 'system', 'content' => "Данные по полям пользователя:\n" . $plotsSummary],
+        ['role' => 'system', 'content' => "Данные по полям пользователя:\n" . $userSummary],
+        ['role' => 'system', 'content' => "Общие данные по региону:\n" . $globalSummary],
         ['role' => 'user', 'content' => $userMessage],
     ];
 
@@ -344,3 +365,6 @@ $router->post('/ai/chat', function (Request $request) {
 });
 
 
+// todo роут саммаризации плотов по разным срезам по ид пользователя
+// todo анализ срезов на странице, человек + робот
+// todo расширение плотов полями...
