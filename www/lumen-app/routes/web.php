@@ -328,7 +328,6 @@ $router->post('/ai/chat', function (Request $request) {
         ($p->livestock ? " (животные: {$p->livestock})" : "")
     )->implode("\n");
 
-    // Агрегация всех полей (общее по культуре/животным)
     $allPlots = DB::table('plots')
         ->select('land_use', 'culture', 'livestock',
             DB::raw('SUM(area) as total_area'),
