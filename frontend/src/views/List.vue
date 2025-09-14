@@ -40,7 +40,10 @@ onMounted(async () => {
       geometry: p.geometry,
       created_at: p.created_at,
       updated_at: p.updated_at,
-      thumbnails: p.photos && p.photos.length ? p.photos : []
+      thumbnails: p.photos && p.photos.length
+          ? p.photos.map(x => x.startsWith("http://localhost:8085/") ? x : `http://localhost:8085/${x}`)
+          : []
+
     }))
 
   } catch (err) {
