@@ -131,6 +131,8 @@ function exportSelected() {
   <a href="/stats">Stats</a>
   <br>
   <a href="/ai">AI</a>
+  <br>
+  <a href="/summaries">AI find</a>
 
   <br><br><br>
   <button @click="initSummary">Init Summary</button>

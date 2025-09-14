@@ -21,7 +21,7 @@ async function sendMessage() {
       message: userMessage,
       owner_id: localStorage.getItem("user_id"),
     })
-
+!
     messages.value.push({ role: "assistant", content: res.data.reply })
   } catch (e) {
     console.error("Ошибка:", e)

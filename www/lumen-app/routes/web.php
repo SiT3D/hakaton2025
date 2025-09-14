@@ -15,11 +15,11 @@
 
 use Carbon\Carbon;
 use Firebase\JWT\JWT;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Lumen\Routing\Router;
-use Illuminate\Http\JsonResponse;
 
 $router->get('/', function () use ($router) {
     return $router->app->version();
@@ -322,8 +322,7 @@ $router->post('/ai/chat', function (Request $request) {
         ->where('owner_id', $request->input('owner_id'))
         ->get(['id', 'name', 'area', 'land_use', 'culture', 'livestock']);
 
-    $userSummary = $userPlots->map(fn($p) =>
-        "{$p->name}: {$p->area} га, {$p->land_use}" .
+    $userSummary = $userPlots->map(fn($p) => "{$p->name}: {$p->area} га, {$p->land_use}" .
         ($p->culture ? " (культура: {$p->culture})" : "") .
         ($p->livestock ? " (животные: {$p->livestock})" : "")
     )->implode("\n");
@@ -343,6 +342,7 @@ $router->post('/ai/chat', function (Request $request) {
         if ($p->land_use === 'livestock') {
             return "{$p->livestock}: {$p->total_livestock} голов";
         }
+
         return "{$p->land_use}: {$p->total_area} га";
     })->implode("\n");
 
@@ -372,11 +372,10 @@ $router->get('/summary/init', function (Request $request) {
         ->get(['id', 'name', 'sowing_date', 'area', 'culture']);
 
     // готовим prompt
-    $plotsText = $plots->map(fn($p) =>
-    "{$p->name}: культура {$p->culture}, дата посева {$p->sowing_date}, площадь {$p->area} га"
+    $plotsText = $plots->map(fn($p) => "{$p->name}: культура {$p->culture}, дата посева {$p->sowing_date}, площадь {$p->area} га"
     )->implode("\n");
 
-    $client = OpenAI::client(env('OPENAI_API_KEY'));
+    $client   = OpenAI::client(env('OPENAI_API_KEY'));
     $messages = [
         ['role' => 'system', 'content' => 'Ты агро-аналитик. Дай даты оптимальных закупок.'],
         ['role' => 'user', 'content' => $plotsText],
@@ -405,5 +404,22 @@ $router->get('/summary/init', function (Request $request) {
         'owner_id' => $ownerId,
     ]);
 });
+
+$router->get('/summaries', function (Request $request) {
+    $ownerId = $request->input('owner_id');
+    $slice   = $request->input('slice_type');
+
+    $query = DB::table('plot_summaries')
+        ->where('user_id', $ownerId);
+
+    if ($slice) {
+        $query->where('slice_type', $slice);
+    }
+
+    $summaries = $query->orderBy('created_at', 'desc')->get();
+
+    return new JsonResponse($summaries);
+});
+
 
 

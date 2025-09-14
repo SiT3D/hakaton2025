@@ -7,6 +7,7 @@ import Logout from '../views/Logout.vue'
 import User from '../views/User.vue'
 import Stats from '../views/Stats.vue'
 import AiChat from '../views/AiChat.vue'
+import Summaries from '../views/Summaries.vue'
 
 const routes = [
     { path: '/register', component: Register },
@@ -17,6 +18,7 @@ const routes = [
     { path: '/user', component: User, meta: { requiresAuth: true } },
     { path: '/stats', component: Stats, meta: { requiresAuth: true } },
     { path: '/ai', component: AiChat, meta: { requiresAuth: true } },
+    { path: '/summaries', component: Summaries, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
