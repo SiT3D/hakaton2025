@@ -424,20 +424,47 @@ $router->get('/summaries', function (Request $request) {
 
 
 $router->post('/ai/slice-chat', function (Request $request) {
+    $ownerId = $request->input('owner_id');
     $question = $request->input('message');
 
-    // все саммари пользователя
-    $summaries = DB::table('plot_summaries')
+    // саммари юзера
+    $userSummaries = DB::table('plot_summaries')
+        ->where('user_id', $ownerId)
         ->get(['slice_type','summary']);
 
-    // склеиваем в контекст
-    $context = $summaries->map(fn($s) =>
+    // все остальные саммари (глобальный контекст)
+    $globalSummaries = DB::table('plot_summaries')
+        ->where('user_id', '!=', $ownerId)
+        ->get(['slice_type','summary']);
+
+    /* MDS */
+    echo 'VAR DUMP 6:21 14.09.2025 web.php 441 <br>';
+    echo '<pre>';
+    var_dump($globalSummaries);
+    die();
+    echo '</pre>';
+    echo '<br>';
+    /* MDS */
+
+    $userContext = $userSummaries->map(fn($s) =>
+        strtoupper($s->slice_type).":\n".$s->summary
+    )->implode("\n\n");
+
+    $globalContext = $globalSummaries->map(fn($s) =>
         strtoupper($s->slice_type).":\n".$s->summary
     )->implode("\n\n");
 
     $client = OpenAI::client(env('OPENAI_API_KEY'));
+
     $messages = [
-        ['role' => 'system', 'content' => "Ты агро-ассистент. Отвечай кратко, используя данные из саммари ниже:\n".$context],
+        ['role' => 'system', 'content' =>
+            "Ты агро-ассистент.
+             Используй в первую очередь данные пользователя,
+             а затем — общие данные региона для поиска запроса пользователя
+             основная идея, помочь найти подходящие саммери, например чтобы найти партнеров на какой то период или по каким то критериям, отвечать на разные вопросы по аграрию, находить какие то новости или лучшие практики. Все данные нужно брать из пула саммери, но и уточнять инфо, ответ короткий локоничный без лишних слов. Искать нужно только в саммери которые есть в системе!!!\n\n".
+            "=== ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ===\n".$userContext."\n\n".
+            "=== ОБЩИЕ ДАННЫЕ ===\n".$globalContext
+        ],
         ['role' => 'user', 'content' => $question],
     ];
 
