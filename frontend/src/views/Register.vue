@@ -1,0 +1,87 @@
+<template>
+  <div class="register">
+    <h1>Create new Account</h1>
+    <p>Already Registered? <a href="/login">Login</a></p>
+
+    <form @submit.prevent="submit">
+      <label>Phone</label>
+      <input
+          v-model="idnp"
+          type="tel"
+          inputmode="tel"
+          pattern="^\+[0-9]{10,15}$"
+          placeholder="+0123456789"
+          required
+      />
+
+      <label>Password</label>
+      <input v-model="password" type="password" placeholder="******" required/>
+
+      <button type="submit">sign up</button>
+    </form>
+  </div>
+</template>
+
+<script setup>
+import {ref} from "vue"
+import axios from "axios"
+import router from "@/router/index.js";
+
+const idnp = ref("")
+const password = ref("")
+
+async function submit()
+{
+  try
+  {
+    await axios.post("http://localhost:8085/register", {
+      login: idnp.value,
+      password: password.value
+    })
+    const res = await axios.post("http://localhost:8085/login", {
+      login: idnp.value,
+      password: password.value
+    })
+    localStorage.setItem("token", res.data.token)
+    localStorage.setItem("user_id", res.data.user.id)
+    router.push("/list")
+  } catch (err)
+  {
+    console.error(err)
+  }
+}
+</script>
+
+<style scoped>
+.register
+{
+  max-width: 400px;
+  margin: 60px auto;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+form
+{
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input
+{
+  padding: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+button
+{
+  background: black;
+  color: white;
+  padding: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+</style>

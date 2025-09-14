@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tests', function (Blueprint $table) {
+        Schema::create('plot_summaries', function (Blueprint $table) {
             $table->id();
+            $table->text('summary');
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('slice_type');
             $table->timestamps();
         });
     }
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tests');
+        Schema::dropIfExists('plot_summaries');
     }
 };
